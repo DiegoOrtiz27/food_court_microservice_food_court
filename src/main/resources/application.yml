@@ -1,0 +1,23 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: msvc-foodcourt
+  datasource:
+    url: jdbc:mysql://localhost:3306/foodquart_foodcourt
+    username: root
+    password: 12345
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: mysql
+
+microservice:
+  user:
+    url: http://localhost:8081
+
+appDescription: "Microservice food court"
+appVersion: "1.0.0"

@@ -1,0 +1,26 @@
+package com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter;
+
+import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
+import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
+import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.entity.RestaurantEntity;
+import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
+import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IRestaurantRepository;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
+
+    private final IRestaurantRepository restaurantRepository;
+    private final IRestaurantEntityMapper restaurantEntityMapper;
+
+    @Override
+    public RestaurantModel saveRestaurant(RestaurantModel restaurantModel) {
+        RestaurantEntity saved = restaurantRepository.save(restaurantEntityMapper.toEntity(restaurantModel));
+        return restaurantEntityMapper.toRestaurantModel(saved);
+    }
+
+    @Override
+    public boolean existsByNit(String nit) {
+        return restaurantRepository.existsByNit(nit);
+    }
+}
