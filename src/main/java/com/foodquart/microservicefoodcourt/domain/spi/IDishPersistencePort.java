@@ -2,7 +2,16 @@ package com.foodquart.microservicefoodcourt.domain.spi;
 
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 
+import java.util.Optional;
+
 public interface IDishPersistencePort {
+
     DishModel saveDish(DishModel dishModel);
-    boolean existsByRestaurantId(Long restaurantId);
+
+    Optional<DishModel> findById(Long id);
+
+    void updateDish(DishModel dishModel);
+
+
+
 }

@@ -2,6 +2,7 @@ package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
 import com.foodquart.microservicefoodcourt.application.request.DishRequestDto;
+import com.foodquart.microservicefoodcourt.application.request.DishUpdateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,5 +31,21 @@ public class DishRestController {
 
         dishHandler.createDish(requestDto, ownerId);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Update a dish (price and description only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Dish updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid data"),
+            @ApiResponse(responseCode = "403", description = "Not authorized")
+    })
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> updateDish(
+            @PathVariable("id") Long dishId,
+            @Valid @RequestBody DishUpdateRequestDto dto,
+            @RequestHeader("X-Owner-Id") Long ownerId) {
+
+        dishHandler.updateDish(dishId, dto, ownerId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

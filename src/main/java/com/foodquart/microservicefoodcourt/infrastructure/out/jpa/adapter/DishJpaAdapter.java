@@ -7,6 +7,8 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.mapper.IDishEn
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IDishRepository;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 public class DishJpaAdapter implements IDishPersistencePort {
 
@@ -21,7 +23,14 @@ public class DishJpaAdapter implements IDishPersistencePort {
     }
 
     @Override
-    public boolean existsByRestaurantId(Long restaurantId) {
-        return dishRepository.existsByRestaurantId(restaurantId);
+    public Optional<DishModel> findById(Long id) {
+        return dishRepository.findById(id)
+                .map(dishEntityMapper::toDishModel);
+    }
+
+    @Override
+    public void updateDish(DishModel dishModel) {
+        DishEntity entity = dishEntityMapper.toEntity(dishModel);
+        dishRepository.save(entity);
     }
 }
