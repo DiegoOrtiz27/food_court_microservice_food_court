@@ -19,6 +19,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurant/").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/dishes/").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(withDefaults());
