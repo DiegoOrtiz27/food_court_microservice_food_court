@@ -7,4 +7,8 @@ public interface IRestaurantPersistencePort {
 
     boolean existsByNit(String nit);
 
+    boolean isOwnerOfRestaurant(Long ownerId, Long restaurantId);
+
+    boolean existsById(Long id);
+
 }
