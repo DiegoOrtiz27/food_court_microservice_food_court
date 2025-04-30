@@ -2,6 +2,7 @@ package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerException;
+import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantException;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
@@ -27,7 +28,7 @@ class CreateDishUseCaseTest {
     IRestaurantPersistencePort restaurantPersistencePort;
 
     @InjectMocks
-    CreateDishUseCase createDishUseCase;
+    CreateCreateDishUseCase createDishUseCase;
 
     private DishModel validDish;
 
@@ -55,20 +56,41 @@ class CreateDishUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw InvalidOwnerException when user is not owner of restaurant")
-    void createDishWhenUserIsNotOwnerThrowsInvalidOwnerException() {
-        when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(false);
+    @DisplayName("Should throw InvalidRestaurantException when restaurant does not exist")
+    void createDishWhenRestaurantDoesNotExistThrowsException() {
+        when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(false);
 
-        assertThrows(InvalidOwnerException.class,
+        InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
                 () -> createDishUseCase.createDish(validDish, 1L));
 
-        verify(restaurantPersistencePort).isOwnerOfRestaurant(1L, validDish.getRestaurantId());
+        assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+
+        verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
         verifyNoMoreInteractions(restaurantPersistencePort, dishPersistencePort);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidOwnerException when user is not owner of restaurant")
+    void createDishWhenUserIsNotOwnerThrowsInvalidOwnerException() {
+        when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
+        when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(false);
+
+        InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+                () -> createDishUseCase.createDish(validDish, 1L));
+
+        assertEquals("User with ID 1 is not the owner of restaurant with ID 5", exception.getMessage());
+
+        InOrder inOrder = inOrder(restaurantPersistencePort);
+        inOrder.verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
+        inOrder.verify(restaurantPersistencePort).isOwnerOfRestaurant(1L, validDish.getRestaurantId());
+
+        verifyNoInteractions(dishPersistencePort);
     }
 
     @Test
     @DisplayName("Should create dish successfully when validations pass")
     void createDishWhenValidShouldSucceed() {
+        when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
         when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(true);
         when(dishPersistencePort.saveDish(validDish)).thenReturn(validDish);
 
@@ -78,6 +100,7 @@ class CreateDishUseCaseTest {
         assertTrue(result.getActive());
 
         InOrder inOrder = inOrder(restaurantPersistencePort, dishPersistencePort);
+        inOrder.verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
         inOrder.verify(restaurantPersistencePort).isOwnerOfRestaurant(1L, validDish.getRestaurantId());
         inOrder.verify(dishPersistencePort).saveDish(validDish);
     }

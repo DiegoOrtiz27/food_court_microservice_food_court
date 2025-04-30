@@ -2,6 +2,6 @@ package com.foodquart.microservicefoodcourt.domain.api;
 
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 
-public interface IDishServicePort {
+public interface ICreateDishServicePort {
     DishModel createDish(DishModel dishModel, Long ownerId);
 }

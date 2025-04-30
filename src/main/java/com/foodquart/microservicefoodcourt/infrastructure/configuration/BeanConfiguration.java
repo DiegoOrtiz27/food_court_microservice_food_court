@@ -1,12 +1,14 @@
 package com.foodquart.microservicefoodcourt.infrastructure.configuration;
 
-import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
+import com.foodquart.microservicefoodcourt.domain.api.ICreateDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.api.IRestaurantServicePort;
+import com.foodquart.microservicefoodcourt.domain.api.IUpdateDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
-import com.foodquart.microservicefoodcourt.domain.usecase.CreateDishUseCase;
+import com.foodquart.microservicefoodcourt.domain.usecase.CreateCreateDishUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.CreateRestaurantUseCase;
+import com.foodquart.microservicefoodcourt.domain.usecase.UpdateDishUseCase;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IUserFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.UserClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -50,8 +52,16 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public IDishServicePort dishServicePort() {
-        return new CreateDishUseCase(
+    public ICreateDishServicePort createDishServicePort() {
+        return new CreateCreateDishUseCase(
+                dishPersistencePort(),
+                restaurantPersistencePort()
+        );
+    }
+
+    @Bean
+    public IUpdateDishServicePort updateDishServicePort() {
+        return new UpdateDishUseCase(
                 dishPersistencePort(),
                 restaurantPersistencePort()
         );

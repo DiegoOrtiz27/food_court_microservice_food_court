@@ -22,6 +22,7 @@ public class CreateRestaurantUseCase implements IRestaurantServicePort {
     public void saveRestaurant(RestaurantModel restaurantModel) {
         validateRestaurantData(restaurantModel);
 
+
         if (restaurantPersistencePort.existsByNit(restaurantModel.getNit())) {
             throw new NitAlreadyExistsException(restaurantModel.getNit());
         }

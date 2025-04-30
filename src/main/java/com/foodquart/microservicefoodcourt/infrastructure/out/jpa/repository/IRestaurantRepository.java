@@ -7,4 +7,6 @@ public interface IRestaurantRepository extends JpaRepository<RestaurantEntity, L
     boolean existsByNit(String nit);
 
     boolean existsByIdAndOwnerId(Long id, Long ownerId);
+
+    boolean existsById(Long id);
 }

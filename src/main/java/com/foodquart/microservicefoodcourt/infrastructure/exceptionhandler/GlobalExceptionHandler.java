@@ -1,8 +1,6 @@
 package com.foodquart.microservicefoodcourt.infrastructure.exceptionhandler;
 
-import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
-import com.foodquart.microservicefoodcourt.domain.exception.NitAlreadyExistsException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerRoleException;
+import com.foodquart.microservicefoodcourt.domain.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -32,6 +30,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDuplicateNitException(NitAlreadyExistsException ex) {
         ErrorResponse error = new ErrorResponse("DUPLICATE_NIT", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InvalidRestaurantException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRestaurant(InvalidRestaurantException ex) {
+        ErrorResponse error = new ErrorResponse("INVALID_RESTAURANT", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidDishException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidDish(InvalidDishException ex) {
+        ErrorResponse error = new ErrorResponse("INVALID_DISH", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

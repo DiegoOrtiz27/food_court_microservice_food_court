@@ -9,4 +9,6 @@ public interface IRestaurantPersistencePort {
 
     boolean isOwnerOfRestaurant(Long ownerId, Long restaurantId);
 
+    boolean existsById(Long id);
+
 }
