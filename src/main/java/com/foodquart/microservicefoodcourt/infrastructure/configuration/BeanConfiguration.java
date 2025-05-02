@@ -1,14 +1,12 @@
 package com.foodquart.microservicefoodcourt.infrastructure.configuration;
 
-import com.foodquart.microservicefoodcourt.domain.api.ICreateDishServicePort;
+import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.api.IRestaurantServicePort;
-import com.foodquart.microservicefoodcourt.domain.api.IUpdateDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
-import com.foodquart.microservicefoodcourt.domain.usecase.CreateCreateDishUseCase;
-import com.foodquart.microservicefoodcourt.domain.usecase.CreateRestaurantUseCase;
-import com.foodquart.microservicefoodcourt.domain.usecase.UpdateDishUseCase;
+import com.foodquart.microservicefoodcourt.domain.usecase.DishUseCase;
+import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantUseCase;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IUserFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.UserClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -24,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 public class BeanConfiguration {
+
     private final IRestaurantRepository restaurantRepository;
     private final IRestaurantEntityMapper restaurantEntityMapper;
 
@@ -41,7 +40,7 @@ public class BeanConfiguration {
 
     @Bean
     public IRestaurantServicePort restaurantServicePort() {
-        return new CreateRestaurantUseCase(
+        return new RestaurantUseCase(
                 restaurantPersistencePort(),
                 userClientPort());
     }
@@ -52,19 +51,11 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public ICreateDishServicePort createDishServicePort() {
-        return new CreateCreateDishUseCase(
+    public IDishServicePort dishServicePort() {
+        return new DishUseCase(
                 dishPersistencePort(),
-                restaurantPersistencePort()
-        );
-    }
-
-    @Bean
-    public IUpdateDishServicePort updateDishServicePort() {
-        return new UpdateDishUseCase(
-                dishPersistencePort(),
-                restaurantPersistencePort()
-        );
+                restaurantPersistencePort(),
+                userClientPort());
     }
 
     @Bean

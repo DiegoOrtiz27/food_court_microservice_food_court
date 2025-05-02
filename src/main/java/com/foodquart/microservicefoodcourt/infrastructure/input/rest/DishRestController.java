@@ -1,8 +1,8 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
+import com.foodquart.microservicefoodcourt.application.dto.UpdateDishRequestDto;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
-import com.foodquart.microservicefoodcourt.application.request.DishRequestDto;
-import com.foodquart.microservicefoodcourt.application.request.DishUpdateRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.DishRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,10 +26,9 @@ public class DishRestController {
     })
     @PostMapping("/")
     public ResponseEntity<Void> createDish(
-            @Valid @RequestBody DishRequestDto requestDto,
-            @RequestHeader("X-Owner-Id") Long ownerId) {
+            @Valid @RequestBody DishRequestDto dishRequestDto) {
 
-        dishHandler.createDish(requestDto, ownerId);
+        dishHandler.createDish(dishRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -42,10 +41,10 @@ public class DishRestController {
     @PatchMapping("/{id}")
     public ResponseEntity<Void> updateDish(
             @PathVariable("id") Long dishId,
-            @Valid @RequestBody DishUpdateRequestDto dto,
-            @RequestHeader("X-Owner-Id") Long ownerId) {
+            @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
 
-        dishHandler.updateDish(dishId, dto, ownerId);
+        updateDishRequestDto.setId(dishId);
+        dishHandler.updateDish(updateDishRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

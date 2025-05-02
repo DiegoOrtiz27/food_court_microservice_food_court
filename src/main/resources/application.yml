@@ -15,6 +15,11 @@ spring:
     show-sql: true
     database: mysql
 
+security:
+  jwt:
+    secret: unaClaveSuperSecretaYSeguraDe32Caracteres!
+    expiration: 3600000
+
 microservice:
   user:
     url: http://localhost:8081
