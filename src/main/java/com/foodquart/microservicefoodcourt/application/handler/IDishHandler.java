@@ -1,10 +1,10 @@
 package com.foodquart.microservicefoodcourt.application.handler;
 
-import com.foodquart.microservicefoodcourt.application.request.DishRequestDto;
-import com.foodquart.microservicefoodcourt.application.request.DishUpdateRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.DishRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.UpdateDishRequestDto;
 
 public interface IDishHandler {
-    void createDish(DishRequestDto dto, Long ownerId);
+    void createDish(DishRequestDto dishRequestDto);
 
-    void updateDish(Long dishId, DishUpdateRequestDto dto, Long ownerId);
+    void updateDish(UpdateDishRequestDto updateDishRequestDto);
 }

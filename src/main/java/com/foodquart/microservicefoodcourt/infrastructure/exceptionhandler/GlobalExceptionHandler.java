@@ -38,10 +38,28 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOwnerRestaurant(InvalidOwnerException ex) {
+        ErrorResponse error = new ErrorResponse("INVALID_OWNER_RESTAURANT", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(InvalidDishException.class)
     public ResponseEntity<ErrorResponse> handleInvalidDish(InvalidDishException ex) {
         ErrorResponse error = new ErrorResponse("INVALID_DISH", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NoDataFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoDataFoundException(NoDataFoundException ex) {
+        ErrorResponse error = new ErrorResponse("NO_DATA_FOUND", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleNoDataFoundException(UnauthorizedException ex) {
+        ErrorResponse error = new ErrorResponse("UNAUTHORIZED", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -1,7 +1,7 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantHandler;
-import com.foodquart.microservicefoodcourt.application.request.RestaurantRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

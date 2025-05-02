@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.application.request;
+package com.foodquart.microservicefoodcourt.application.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

@@ -14,8 +14,8 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
     private final IRestaurantEntityMapper restaurantEntityMapper;
 
     @Override
-    public RestaurantModel saveRestaurant(RestaurantModel restaurantModel) {
-        RestaurantEntity saved = restaurantRepository.save(restaurantEntityMapper.toEntity(restaurantModel));
+    public RestaurantModel saveRestaurant(RestaurantModel restaurant) {
+        RestaurantEntity saved = restaurantRepository.save(restaurantEntityMapper.toEntity(restaurant));
         return restaurantEntityMapper.toRestaurantModel(saved);
     }
 

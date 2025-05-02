@@ -1,11 +1,13 @@
-package com.foodquart.microservicefoodcourt.application.request;
+package com.foodquart.microservicefoodcourt.application.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Getter
 @Setter
-public class DishUpdateRequestDto {
+public class UpdateDishRequestDto {
+
+    private Long id;
 
     @NotBlank(message = "Description is required")
     private String description;

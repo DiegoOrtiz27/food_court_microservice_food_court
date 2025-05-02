@@ -2,7 +2,7 @@ package com.foodquart.microservicefoodcourt.application.handler.impl;
 
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.IRestaurantRequestMapper;
-import com.foodquart.microservicefoodcourt.application.request.RestaurantRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantRequestDto;
 import com.foodquart.microservicefoodcourt.domain.api.IRestaurantServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import lombok.RequiredArgsConstructor;

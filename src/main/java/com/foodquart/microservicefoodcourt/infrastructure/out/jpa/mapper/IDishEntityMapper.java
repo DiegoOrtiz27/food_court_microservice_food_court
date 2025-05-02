@@ -14,17 +14,9 @@ import org.mapstruct.ReportingPolicy;
 )
 public interface IDishEntityMapper {
 
-    @Mapping(target = "restaurant", source = "restaurantId", qualifiedByName = "idToRestaurant")
-    DishEntity toEntity(DishModel model);
+    @Mapping(target = "restaurant.id", source = "restaurantId")
+    DishEntity toEntity(DishModel dish);
 
     @Mapping(target = "restaurantId", source = "restaurant.id")
-    DishModel toDishModel(DishEntity entity);
-
-    @Named("idToRestaurant")
-    default RestaurantEntity idToRestaurant(Long restaurantId) {
-        if (restaurantId == null) return null;
-        RestaurantEntity restaurant = new RestaurantEntity();
-        restaurant.setId(restaurantId);
-        return restaurant;
-    }
+    DishModel toDishModel(DishEntity dishEntity);
 }

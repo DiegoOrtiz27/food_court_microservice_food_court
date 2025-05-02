@@ -8,12 +8,12 @@ import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
 
-public class CreateRestaurantUseCase implements IRestaurantServicePort {
+public class RestaurantUseCase implements IRestaurantServicePort {
 
     private final IRestaurantPersistencePort restaurantPersistencePort;
     private final IUserClientPort userClientPort;
 
-    public CreateRestaurantUseCase(IRestaurantPersistencePort restaurantPersistencePort, IUserClientPort userClientPort) {
+    public RestaurantUseCase(IRestaurantPersistencePort restaurantPersistencePort, IUserClientPort userClientPort) {
         this.restaurantPersistencePort = restaurantPersistencePort;
         this.userClientPort = userClientPort;
     }
@@ -21,7 +21,6 @@ public class CreateRestaurantUseCase implements IRestaurantServicePort {
     @Override
     public void saveRestaurant(RestaurantModel restaurantModel) {
         validateRestaurantData(restaurantModel);
-
 
         if (restaurantPersistencePort.existsByNit(restaurantModel.getNit())) {
             throw new NitAlreadyExistsException(restaurantModel.getNit());

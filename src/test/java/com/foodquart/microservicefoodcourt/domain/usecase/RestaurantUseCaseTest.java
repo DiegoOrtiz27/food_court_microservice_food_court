@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateRestaurantUseCaseTest {
+class RestaurantUseCaseTest {
 
     @Mock
     IRestaurantPersistencePort restaurantPersistencePort;
@@ -28,7 +28,7 @@ class CreateRestaurantUseCaseTest {
     IUserClientPort userClientPort;
 
     @InjectMocks
-    CreateRestaurantUseCase createRestaurantUseCase;
+    RestaurantUseCase restaurantUseCase;
 
     private RestaurantModel validRestaurant;
 
@@ -49,7 +49,7 @@ class CreateRestaurantUseCaseTest {
         validRestaurant.setName("12345");
 
         DomainException exception = assertThrows(DomainException.class,
-                () -> createRestaurantUseCase.saveRestaurant(validRestaurant));
+                () -> restaurantUseCase.saveRestaurant(validRestaurant));
         assertEquals("Restaurant name cannot contain only numbers.", exception.getMessage());
 
         verifyNoInteractions(restaurantPersistencePort, userClientPort);
@@ -61,7 +61,7 @@ class CreateRestaurantUseCaseTest {
         validRestaurant.setNit("abc123");
 
         DomainException exception = assertThrows(DomainException.class,
-                () -> createRestaurantUseCase.saveRestaurant(validRestaurant));
+                () -> restaurantUseCase.saveRestaurant(validRestaurant));
         assertEquals("NIT must contain only numbers.", exception.getMessage());
 
         verifyNoInteractions(restaurantPersistencePort, userClientPort);
@@ -73,7 +73,7 @@ class CreateRestaurantUseCaseTest {
         validRestaurant.setPhone("+573001234567999");
 
         DomainException exception = assertThrows(DomainException.class,
-                () -> createRestaurantUseCase.saveRestaurant(validRestaurant));
+                () -> restaurantUseCase.saveRestaurant(validRestaurant));
         assertEquals("Phone must be numeric and up to 13 characters.", exception.getMessage());
 
         verifyNoInteractions(restaurantPersistencePort, userClientPort);
@@ -85,7 +85,7 @@ class CreateRestaurantUseCaseTest {
         when(restaurantPersistencePort.existsByNit(validRestaurant.getNit())).thenReturn(true);
 
         assertThrows(NitAlreadyExistsException.class,
-                () -> createRestaurantUseCase.saveRestaurant(validRestaurant));
+                () -> restaurantUseCase.saveRestaurant(validRestaurant));
 
         verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
         verifyNoMoreInteractions(restaurantPersistencePort, userClientPort);
@@ -98,7 +98,7 @@ class CreateRestaurantUseCaseTest {
         when(userClientPort.findOwnerById(validRestaurant.getOwnerId())).thenReturn(false);
 
         assertThrows(InvalidOwnerRoleException.class,
-                () -> createRestaurantUseCase.saveRestaurant(validRestaurant));
+                () -> restaurantUseCase.saveRestaurant(validRestaurant));
 
         InOrder inOrder = inOrder(restaurantPersistencePort, userClientPort);
         inOrder.verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
@@ -113,7 +113,7 @@ class CreateRestaurantUseCaseTest {
         when(restaurantPersistencePort.existsByNit(validRestaurant.getNit())).thenReturn(false);
         when(userClientPort.findOwnerById(validRestaurant.getOwnerId())).thenReturn(true);
 
-        createRestaurantUseCase.saveRestaurant(validRestaurant);
+        restaurantUseCase.saveRestaurant(validRestaurant);
 
         InOrder inOrder = inOrder(restaurantPersistencePort, userClientPort);
         inOrder.verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
