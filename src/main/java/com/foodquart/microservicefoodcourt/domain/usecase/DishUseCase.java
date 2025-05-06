@@ -8,7 +8,6 @@ import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantExc
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
-import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
 
 import java.util.Optional;
 
@@ -16,25 +15,21 @@ public class DishUseCase implements IDishServicePort {
 
     private final IDishPersistencePort dishPersistencePort;
     private final IRestaurantPersistencePort restaurantPersistencePort;
-    private final IUserClientPort userClientPort;
 
     public DishUseCase(IDishPersistencePort dishPersistencePort,
-                       IRestaurantPersistencePort restaurantPersistencePort,
-                       IUserClientPort userClientPort) {
+                       IRestaurantPersistencePort restaurantPersistencePort) {
         this.dishPersistencePort = dishPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
-        this.userClientPort = userClientPort;
     }
 
     @Override
-    public DishModel createDish(DishModel dishModel) {
+    public DishModel createDish(DishModel dishModel, Long ownerId) {
         validateDish(dishModel);
 
         if (!restaurantPersistencePort.existsById(dishModel.getRestaurantId())) {
             throw new InvalidRestaurantException(dishModel.getRestaurantId());
         }
 
-        Long ownerId = userClientPort.getUserId();
         if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, dishModel.getRestaurantId())) {
             throw new InvalidOwnerException(dishModel.getRestaurantId());
         }
@@ -45,7 +40,7 @@ public class DishUseCase implements IDishServicePort {
     }
 
     @Override
-    public void updateDish(DishModel dishModel) {
+    public void updateDish(DishModel dishModel, Long ownerId) {
         validateDish(dishModel);
 
         Optional<DishModel> existingDish = dishPersistencePort.findById(dishModel.getId());
@@ -59,7 +54,6 @@ public class DishUseCase implements IDishServicePort {
             throw new InvalidRestaurantException(restaurantId);
         }
 
-        Long ownerId = userClientPort.getUserId();
         if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)) {
             throw new InvalidOwnerException(restaurantId);
         }

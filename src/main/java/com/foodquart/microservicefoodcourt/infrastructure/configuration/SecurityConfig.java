@@ -18,6 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String ADMIN = "ADMIN";
+    private static final String OWNER = "OWNER";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -30,9 +33,10 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/restaurant/").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/dishes/").hasRole("OWNER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/restaurant/").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/*/employees/").hasRole(OWNER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/dishes/").hasRole(OWNER)
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").hasRole(OWNER)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

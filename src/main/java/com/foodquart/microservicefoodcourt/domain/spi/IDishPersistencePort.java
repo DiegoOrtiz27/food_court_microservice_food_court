@@ -10,7 +10,7 @@ public interface IDishPersistencePort {
 
     Optional<DishModel> findById(Long id);
 
-    void updateDish(DishModel dishModel);
+    DishModel updateDish(DishModel dishModel);
 
 
 

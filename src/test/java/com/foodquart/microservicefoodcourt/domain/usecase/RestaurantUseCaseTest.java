@@ -1,16 +1,13 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerRoleException;
 import com.foodquart.microservicefoodcourt.domain.exception.NitAlreadyExistsException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
-import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,9 +20,6 @@ class RestaurantUseCaseTest {
 
     @Mock
     IRestaurantPersistencePort restaurantPersistencePort;
-
-    @Mock
-    IUserClientPort userClientPort;
 
     @InjectMocks
     RestaurantUseCase restaurantUseCase;
@@ -40,7 +34,7 @@ class RestaurantUseCaseTest {
         validRestaurant.setAddress("Cra 45 #45-89");
         validRestaurant.setPhone("+573001234567");
         validRestaurant.setLogoUrl("https://logo.com");
-        validRestaurant.setOwnerId(1L);
+        validRestaurant.setOwnerId(1L); // Aunque no se use en este caso de uso
     }
 
     @Test
@@ -52,7 +46,7 @@ class RestaurantUseCaseTest {
                 () -> restaurantUseCase.saveRestaurant(validRestaurant));
         assertEquals("Restaurant name cannot contain only numbers.", exception.getMessage());
 
-        verifyNoInteractions(restaurantPersistencePort, userClientPort);
+        verifyNoInteractions(restaurantPersistencePort);
     }
 
     @Test
@@ -64,7 +58,7 @@ class RestaurantUseCaseTest {
                 () -> restaurantUseCase.saveRestaurant(validRestaurant));
         assertEquals("NIT must contain only numbers.", exception.getMessage());
 
-        verifyNoInteractions(restaurantPersistencePort, userClientPort);
+        verifyNoInteractions(restaurantPersistencePort);
     }
 
     @Test
@@ -74,9 +68,9 @@ class RestaurantUseCaseTest {
 
         DomainException exception = assertThrows(DomainException.class,
                 () -> restaurantUseCase.saveRestaurant(validRestaurant));
-        assertEquals("Phone must be numeric and up to 13 characters.", exception.getMessage());
+        assertEquals("Phone should have maximum 13 characters and can include '+'", exception.getMessage());
 
-        verifyNoInteractions(restaurantPersistencePort, userClientPort);
+        verifyNoInteractions(restaurantPersistencePort);
     }
 
     @Test
@@ -88,36 +82,29 @@ class RestaurantUseCaseTest {
                 () -> restaurantUseCase.saveRestaurant(validRestaurant));
 
         verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
-        verifyNoMoreInteractions(restaurantPersistencePort, userClientPort);
+        verifyNoMoreInteractions(restaurantPersistencePort);
     }
 
     @Test
-    @DisplayName("Should throw InvalidOwnerRoleException if user is not owner")
-    void saveRestaurantWhenUserIsNotOwnerThrowsInvalidOwnerRoleException() {
-        when(restaurantPersistencePort.existsByNit(validRestaurant.getNit())).thenReturn(false);
-        when(userClientPort.findOwnerById(validRestaurant.getOwnerId())).thenReturn(false);
+    @DisplayName("Should throw DomainException if phone has invalid format (too short)")
+    void saveRestaurantWhenPhoneTooShortThrowsDomainException() {
+        validRestaurant.setPhone("123456789");
 
-        assertThrows(InvalidOwnerRoleException.class,
+        DomainException exception = assertThrows(DomainException.class,
                 () -> restaurantUseCase.saveRestaurant(validRestaurant));
+        assertEquals("Phone should have maximum 13 characters and can include '+'", exception.getMessage());
 
-        InOrder inOrder = inOrder(restaurantPersistencePort, userClientPort);
-        inOrder.verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
-        inOrder.verify(userClientPort).findOwnerById(validRestaurant.getOwnerId());
-
-        verifyNoMoreInteractions(restaurantPersistencePort, userClientPort);
+        verifyNoInteractions(restaurantPersistencePort);
     }
 
     @Test
     @DisplayName("Should save restaurant successfully if all validations pass")
     void saveRestaurantWhenValidShouldSucceed() {
         when(restaurantPersistencePort.existsByNit(validRestaurant.getNit())).thenReturn(false);
-        when(userClientPort.findOwnerById(validRestaurant.getOwnerId())).thenReturn(true);
 
         restaurantUseCase.saveRestaurant(validRestaurant);
 
-        InOrder inOrder = inOrder(restaurantPersistencePort, userClientPort);
-        inOrder.verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
-        inOrder.verify(userClientPort).findOwnerById(validRestaurant.getOwnerId());
-        inOrder.verify(restaurantPersistencePort).saveRestaurant(validRestaurant);
+        verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
+        verify(restaurantPersistencePort).saveRestaurant(validRestaurant);
     }
 }

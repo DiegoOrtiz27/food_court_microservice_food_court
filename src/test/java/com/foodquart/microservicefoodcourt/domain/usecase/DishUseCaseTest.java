@@ -7,7 +7,6 @@ import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantExc
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
-import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,13 +30,11 @@ class DishUseCaseTest {
     @Mock
     IRestaurantPersistencePort restaurantPersistencePort;
 
-    @Mock
-    IUserClientPort userClientPort;
-
     @InjectMocks
     DishUseCase dishUseCase;
 
     private DishModel validDish;
+    private Long ownerId;
 
     @BeforeEach
     void setup() {
@@ -49,6 +46,7 @@ class DishUseCaseTest {
         validDish.setImageUrl("https://img.com/ensalada.jpg");
         validDish.setCategory("Starter");
         validDish.setRestaurantId(5L);
+        ownerId = 10L; // Establecer un ownerId para las pruebas
     }
 
     @Nested
@@ -60,10 +58,10 @@ class DishUseCaseTest {
             validDish.setPrice(0);
 
             DomainException exception = assertThrows(DomainException.class,
-                    () -> dishUseCase.createDish(validDish));
+                    () -> dishUseCase.createDish(validDish, ownerId));
             assertEquals("Price must be positive", exception.getMessage());
 
-            verifyNoInteractions(restaurantPersistencePort, userClientPort, dishPersistencePort);
+            verifyNoInteractions(restaurantPersistencePort, dishPersistencePort);
         }
 
         @Test
@@ -71,37 +69,41 @@ class DishUseCaseTest {
             when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(false);
 
             InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
-                    () -> dishUseCase.createDish(validDish));
+                    () -> dishUseCase.createDish(validDish, ownerId));
 
             assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
             verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
-            verifyNoMoreInteractions(restaurantPersistencePort, userClientPort, dishPersistencePort);
+            verifyNoMoreInteractions(restaurantPersistencePort, dishPersistencePort);
         }
 
         @Test
         void shouldThrowInvalidOwnerExceptionWhenUserIsNotOwner() {
             when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
-            when(userClientPort.getUserId()).thenReturn(1L);
-            when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(false);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, validDish.getRestaurantId())).thenReturn(false);
 
             InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
-                    () -> dishUseCase.createDish(validDish));
+                    () -> dishUseCase.createDish(validDish, ownerId));
 
-            assertEquals("User with ID 1 is not the owner of restaurant with ID 5", exception.getMessage());
+            // Mensaje de error corregido
+            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, validDish.getRestaurantId());
+            verifyNoMoreInteractions(restaurantPersistencePort, dishPersistencePort);
         }
 
         @Test
         void shouldCreateDishSuccessfully() {
             when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
-            when(userClientPort.getUserId()).thenReturn(1L);
-            when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, validDish.getRestaurantId())).thenReturn(true);
             when(dishPersistencePort.saveDish(validDish)).thenReturn(validDish);
 
-            DishModel result = dishUseCase.createDish(validDish);
+            DishModel result = dishUseCase.createDish(validDish, ownerId);
 
             assertTrue(result.getActive());
             assertEquals(validDish, result);
             verify(dishPersistencePort).saveDish(validDish);
+            verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, validDish.getRestaurantId());
         }
     }
 
@@ -114,10 +116,10 @@ class DishUseCaseTest {
             validDish.setPrice(0);
 
             DomainException exception = assertThrows(DomainException.class,
-                    () -> dishUseCase.updateDish(validDish));
+                    () -> dishUseCase.updateDish(validDish, ownerId));
 
             assertEquals("Price must be positive", exception.getMessage());
-            verifyNoInteractions(dishPersistencePort, restaurantPersistencePort, userClientPort);
+            verifyNoInteractions(dishPersistencePort, restaurantPersistencePort);
         }
 
         @Test
@@ -125,41 +127,80 @@ class DishUseCaseTest {
             when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.empty());
 
             InvalidDishException exception = assertThrows(InvalidDishException.class,
-                    () -> dishUseCase.updateDish(validDish));
+                    () -> dishUseCase.updateDish(validDish, ownerId));
 
             assertEquals("Dish with id '1' not found", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
+        }
+
+        @Test
+        void shouldThrowInvalidRestaurantExceptionWhenRestaurantDoesNotExist() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setRestaurantId(5L);
+            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(false);
+
+            InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
+                    () -> dishUseCase.updateDish(validDish, ownerId));
+
+            assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
         }
 
         @Test
         void shouldThrowInvalidOwnerExceptionWhenUserIsNotOwner() {
-            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(validDish));
-            when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
-            when(userClientPort.getUserId()).thenReturn(1L);
-            when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(false);
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setRestaurantId(5L);
+            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(false);
 
             InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
-                    () -> dishUseCase.updateDish(validDish));
+                    () -> dishUseCase.updateDish(validDish, ownerId));
 
-            assertEquals("User with ID 1 is not the owner of restaurant with ID 5", exception.getMessage());
+            // Mensaje de error corregido
+            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
         }
 
         @Test
         void shouldUpdateDishSuccessfully() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setName("Ensalada César");
+            existingDish.setPrice(12000);
+            existingDish.setDescription("Fresca y saludable");
+            existingDish.setImageUrl("https://img.com/ensalada.jpg");
+            existingDish.setCategory("Starter");
+            existingDish.setRestaurantId(5L);
+            existingDish.setActive(true);
+
             DishModel updatedDish = new DishModel();
             updatedDish.setId(1L);
             updatedDish.setDescription("Nueva descripción");
             updatedDish.setPrice(15000);
 
-            when(dishPersistencePort.findById(1L)).thenReturn(Optional.of(validDish));
-            when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
-            when(userClientPort.getUserId()).thenReturn(1L);
-            when(restaurantPersistencePort.isOwnerOfRestaurant(1L, validDish.getRestaurantId())).thenReturn(true);
+            when(dishPersistencePort.findById(1L)).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(true);
+            when(dishPersistencePort.updateDish(existingDish)).thenReturn(existingDish);
 
-            dishUseCase.updateDish(updatedDish);
+            dishUseCase.updateDish(updatedDish, ownerId);
 
-            assertEquals("Nueva descripción", validDish.getDescription());
-            assertEquals(15000, validDish.getPrice());
-            verify(dishPersistencePort).updateDish(validDish);
+            assertEquals("Nueva descripción", existingDish.getDescription());
+            assertEquals(15000, existingDish.getPrice());
+            verify(dishPersistencePort).findById(1L);
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
+            verify(dishPersistencePort).updateDish(existingDish);
         }
     }
 }

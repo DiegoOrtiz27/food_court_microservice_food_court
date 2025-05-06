@@ -1,0 +1,8 @@
+package com.foodquart.microservicefoodcourt.application.handler;
+
+import com.foodquart.microservicefoodcourt.application.dto.CreateRestaurantEmployeeRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.CreateRestaurantEmployeeResponseDto;
+
+public interface IRestaurantEmployeeHandler {
+    CreateRestaurantEmployeeResponseDto addEmployeeToRestaurant(Long ownerId, CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto);
+}
