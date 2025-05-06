@@ -43,12 +43,43 @@ public class DishUseCase implements IDishServicePort {
     public void updateDish(DishModel dishModel, Long ownerId) {
         validateDish(dishModel);
 
-        Optional<DishModel> existingDish = dishPersistencePort.findById(dishModel.getId());
-        if(existingDish.isEmpty()) {
-            throw new InvalidDishException(dishModel.getId());
-        }
+        Optional<DishModel> existingDish = validateExistingDish(dishModel.getId());
 
-        Long restaurantId = existingDish.get().getRestaurantId();
+        existingDish.ifPresent(dish -> {
+            validateUpdateDish(dish.getRestaurantId(), ownerId);
+            dish.setDescription(dishModel.getDescription());
+            dish.setPrice(dishModel.getPrice());
+            dishPersistencePort.updateDish(dish);
+        });
+    }
+
+    @Override
+    public DishModel enableOrDisableDish(DishModel dishModel, Long ownerId) {
+        Optional<DishModel> existingDish = validateExistingDish(dishModel.getId());
+
+        return existingDish.map(dish -> {
+            validateUpdateDish(dish.getRestaurantId(), ownerId);
+
+            dish.setActive(dishModel.getActive());
+            return dishPersistencePort.updateDishStatus(dish);
+        }).orElse(null);
+    }
+
+    private void validateDish(DishModel dish) {
+        if (dish.getPrice() <= 0) {
+            throw new DomainException("Price must be positive");
+        }
+    }
+
+    private Optional<DishModel> validateExistingDish(Long dishId) {
+        Optional<DishModel> existingDish = dishPersistencePort.findById(dishId);
+        if(existingDish.isEmpty()) {
+            throw new InvalidDishException(dishId);
+        }
+        return existingDish;
+    }
+
+    private void validateUpdateDish(Long restaurantId, Long ownerId) {
 
         if (!restaurantPersistencePort.existsById(restaurantId)) {
             throw new InvalidRestaurantException(restaurantId);
@@ -56,17 +87,6 @@ public class DishUseCase implements IDishServicePort {
 
         if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)) {
             throw new InvalidOwnerException(restaurantId);
-        }
-
-        existingDish.get().setDescription(dishModel.getDescription());
-        existingDish.get().setPrice(dishModel.getPrice());
-
-        dishPersistencePort.updateDish(existingDish.orElse(null));
-    }
-
-    private void validateDish(DishModel dish) {
-        if (dish.getPrice() <= 0) {
-            throw new DomainException("Price must be positive");
         }
     }
 }

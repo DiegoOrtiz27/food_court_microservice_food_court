@@ -123,18 +123,6 @@ class DishUseCaseTest {
         }
 
         @Test
-        void shouldThrowInvalidDishExceptionWhenDishNotFound() {
-            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.empty());
-
-            InvalidDishException exception = assertThrows(InvalidDishException.class,
-                    () -> dishUseCase.updateDish(validDish, ownerId));
-
-            assertEquals("Dish with id '1' not found", exception.getMessage());
-            verify(dishPersistencePort).findById(validDish.getId());
-            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
-        }
-
-        @Test
         void shouldThrowInvalidRestaurantExceptionWhenRestaurantDoesNotExist() {
             DishModel existingDish = new DishModel();
             existingDish.setId(1L);
@@ -201,6 +189,115 @@ class DishUseCaseTest {
             verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
             verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
             verify(dishPersistencePort).updateDish(existingDish);
+        }
+    }
+
+    @Nested
+    @DisplayName("Enable or Disable Dish")
+    class EnableOrDisableDish {
+
+        @Test
+        void shouldThrowInvalidDishExceptionWhenDishNotFound() {
+            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.empty());
+
+            InvalidDishException exception = assertThrows(InvalidDishException.class,
+                    () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
+
+            assertEquals("Dish with id '1' not found", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
+        }
+
+        @Test
+        void shouldThrowInvalidRestaurantExceptionWhenRestaurantDoesNotExist() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setRestaurantId(5L);
+            existingDish.setActive(true);
+
+            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(false);
+
+            InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
+                    () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
+
+            assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
+        }
+
+        @Test
+        void shouldThrowInvalidOwnerExceptionWhenUserIsNotOwner() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setRestaurantId(5L);
+            existingDish.setActive(true);
+
+            when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(false);
+
+            InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+                    () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
+
+            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            verify(dishPersistencePort).findById(validDish.getId());
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
+            verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
+        }
+
+        @Test
+        void shouldEnableDishSuccessfully() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setName("Ensalada César");
+            existingDish.setRestaurantId(5L);
+            existingDish.setActive(false);
+
+            DishModel dishToEnable = new DishModel();
+            dishToEnable.setId(1L);
+            dishToEnable.setActive(true);
+
+            when(dishPersistencePort.findById(1L)).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(true);
+            when(dishPersistencePort.updateDishStatus(existingDish)).thenReturn(existingDish);
+
+            DishModel result = dishUseCase.enableOrDisableDish(dishToEnable, ownerId);
+
+            assertTrue(result.getActive());
+            verify(dishPersistencePort).findById(1L);
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
+            verify(dishPersistencePort).updateDishStatus(existingDish);
+        }
+
+        @Test
+        void shouldDisableDishSuccessfully() {
+            DishModel existingDish = new DishModel();
+            existingDish.setId(1L);
+            existingDish.setName("Ensalada César");
+            existingDish.setRestaurantId(5L);
+            existingDish.setActive(true);
+
+            DishModel dishToDisable = new DishModel();
+            dishToDisable.setId(1L);
+            dishToDisable.setActive(false);
+
+            when(dishPersistencePort.findById(1L)).thenReturn(Optional.of(existingDish));
+            when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(true);
+            when(dishPersistencePort.updateDishStatus(existingDish)).thenReturn(existingDish);
+
+            DishModel result = dishUseCase.enableOrDisableDish(dishToDisable, ownerId);
+
+            assertFalse(result.getActive());
+            verify(dishPersistencePort).findById(1L);
+            verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
+            verify(dishPersistencePort).updateDishStatus(existingDish);
         }
     }
 }

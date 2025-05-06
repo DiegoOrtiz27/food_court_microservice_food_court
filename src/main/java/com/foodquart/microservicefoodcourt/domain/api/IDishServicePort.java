@@ -6,4 +6,6 @@ public interface IDishServicePort {
     DishModel createDish(DishModel dishModel, Long ownerId);
 
     void updateDish(DishModel dishModel, Long ownerId);
+
+    DishModel enableOrDisableDish(DishModel dishModel, Long ownerId);
 }
