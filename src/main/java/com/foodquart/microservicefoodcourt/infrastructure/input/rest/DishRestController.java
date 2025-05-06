@@ -1,14 +1,12 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
-import com.foodquart.microservicefoodcourt.application.dto.DishResponseDto;
-import com.foodquart.microservicefoodcourt.application.dto.EnableDishRequestDto;
-import com.foodquart.microservicefoodcourt.application.dto.UpdateDishRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.*;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
-import com.foodquart.microservicefoodcourt.application.dto.DishRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -55,5 +53,19 @@ public class DishRestController {
         Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         enableDishRequestDto.setId(dishId);
         return ResponseEntity.ok(dishHandler.enableOrDisableDish(enableDishRequestDto, id));
+    }
+
+    @Operation(summary = "Get dishes by restaurant with pagination and category filter")
+    @ApiResponse(responseCode = "200", description = "Dishes retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Restaurant not found")
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<Page<DishListResponseDto>> getDishesByRestaurant(
+            @PathVariable Long restaurantId,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<DishListResponseDto> dishes = dishHandler.getDishesByRestaurant(restaurantId, category, page, size);
+        return ResponseEntity.ok(dishes);
     }
 }

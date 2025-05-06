@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetRestaurantResponseDto {
+public class RestaurantListResponseDto {
     private String name;
     private String logoUrl;
 }

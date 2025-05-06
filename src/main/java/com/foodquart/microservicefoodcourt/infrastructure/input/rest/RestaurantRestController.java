@@ -1,6 +1,6 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
-import com.foodquart.microservicefoodcourt.application.dto.GetRestaurantResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.RestaurantResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantHandler;
 import com.foodquart.microservicefoodcourt.application.dto.RestaurantRequestDto;
@@ -33,14 +33,12 @@ public class RestaurantRestController {
     @ApiResponse(responseCode = "200", description = "Restaurants retrieved successfully")
     @ApiResponse(responseCode = "204", description = "No restaurants found")
     @GetMapping("/")
-    public ResponseEntity<Page<GetRestaurantResponseDto>> getAllRestaurants(
+    public ResponseEntity<Page<RestaurantListResponseDto>> getAllRestaurants(
             @Parameter(description = "Page number (0-based)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of items per page", example = "10")
             @RequestParam(defaultValue = "10") int size) {
-        Page<GetRestaurantResponseDto> restaurants = restaurantHandler.getAllRestaurants(page, size);
-        return restaurants.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(restaurants);
+        Page<RestaurantListResponseDto> restaurants = restaurantHandler.getAllRestaurants(page, size);
+        return ResponseEntity.ok(restaurants);
     }
 }

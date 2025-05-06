@@ -6,6 +6,8 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.entity.DishEnt
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.mapper.IDishEntityMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IDishRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Optional;
 
@@ -49,5 +51,14 @@ public class DishJpaAdapter implements IDishPersistencePort {
             return dishEntityMapper.toDishModel(updatedEntity);
         }
         return null;
+    }
+
+    @Override
+    public Page<DishModel> findByRestaurantIdAndCategory(Long restaurantId, String category, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        return (category == null || category.isEmpty())
+                ? dishRepository.findByRestaurantId(restaurantId, pageRequest).map(dishEntityMapper::toDishModel)
+                : dishRepository.findByRestaurantIdAndCategory(restaurantId, category, pageRequest).map(dishEntityMapper::toDishModel);
     }
 }
