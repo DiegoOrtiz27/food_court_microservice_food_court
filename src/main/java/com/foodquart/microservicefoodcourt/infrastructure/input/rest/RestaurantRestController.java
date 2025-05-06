@@ -1,18 +1,17 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
+import com.foodquart.microservicefoodcourt.application.dto.GetRestaurantResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantHandler;
 import com.foodquart.microservicefoodcourt.application.dto.RestaurantRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/restaurant")
@@ -22,14 +21,26 @@ public class RestaurantRestController {
     private final IRestaurantHandler restaurantHandler;
 
     @Operation(summary = "Create a new restaurant")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Restaurant created successfully"),
-            @ApiResponse(responseCode = "400", description = "Validation error"),
-            @ApiResponse(responseCode = "409", description = "Owner is not valid")
-    })
+    @ApiResponse(responseCode = "201", description = "Restaurant created successfully")
+    @ApiResponse(responseCode = "400", description = "Validation error")
+    @ApiResponse(responseCode = "409", description = "Owner is not valid")
     @PostMapping("/")
-    public ResponseEntity<Void> createRestaurant(@Valid @RequestBody RestaurantRequestDto requestDto) {
-        restaurantHandler.saveRestaurant(requestDto);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    public ResponseEntity<RestaurantResponseDto> createRestaurant(@Valid @RequestBody RestaurantRequestDto requestDto) {
+        return ResponseEntity.ok(restaurantHandler.saveRestaurant(requestDto));
+    }
+
+    @Operation(summary = "Get all restaurants paginated and sorted by name")
+    @ApiResponse(responseCode = "200", description = "Restaurants retrieved successfully")
+    @ApiResponse(responseCode = "204", description = "No restaurants found")
+    @GetMapping("/")
+    public ResponseEntity<Page<GetRestaurantResponseDto>> getAllRestaurants(
+            @Parameter(description = "Page number (0-based)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page", example = "10")
+            @RequestParam(defaultValue = "10") int size) {
+        Page<GetRestaurantResponseDto> restaurants = restaurantHandler.getAllRestaurants(page, size);
+        return restaurants.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(restaurants);
     }
 }

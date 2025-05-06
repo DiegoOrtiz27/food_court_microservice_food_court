@@ -7,7 +7,6 @@ import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
 import com.foodquart.microservicefoodcourt.application.dto.DishRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +20,9 @@ public class DishRestController {
     private final IDishHandler dishHandler;
 
     @Operation(summary = "Create a new dish")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Dish created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "403", description = "Only restaurant owners can create dishes")
-    })
+    @ApiResponse(responseCode = "201", description = "Dish created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "403", description = "Only restaurant owners can create dishes")
     @PostMapping("/")
     public ResponseEntity<DishResponseDto> createDish(
             @Valid @RequestBody DishRequestDto dishRequestDto) {
@@ -34,11 +31,9 @@ public class DishRestController {
     }
 
     @Operation(summary = "Update a dish (price and description only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Dish updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid data"),
-            @ApiResponse(responseCode = "403", description = "Not authorized")
-    })
+    @ApiResponse(responseCode = "204", description = "Dish updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid data")
+    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/{id}")
     public ResponseEntity<DishResponseDto> updateDish(
             @PathVariable("id") Long dishId,
@@ -50,11 +45,9 @@ public class DishRestController {
     }
 
     @Operation(summary = "Enable or disable a dish")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Dish status updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "403", description = "Not authorized")
-    })
+    @ApiResponse(responseCode = "204", description = "Dish status updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/status/{id}")
     public ResponseEntity<DishResponseDto> enableOrDisableDish(
             @PathVariable("id") Long dishId,

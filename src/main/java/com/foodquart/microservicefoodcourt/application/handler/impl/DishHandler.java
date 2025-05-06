@@ -9,6 +9,7 @@ import com.foodquart.microservicefoodcourt.application.dto.UpdateDishRequestDto;
 import com.foodquart.microservicefoodcourt.application.mapper.IDishResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
+import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,26 +27,23 @@ public class DishHandler implements IDishHandler {
     public DishResponseDto createDish(DishRequestDto dishRequestDto, Long ownerId) {
         DishModel dishModel = dishRequestMapper.toDish(dishRequestDto);
         dishModel = dishServicePort.createDish(dishModel, ownerId);
-        return dishResponseMapper.toResponse("The dish has been created successfully", dishModel.getId());
+        return dishResponseMapper.toResponse(dishModel.getId(), DishMessages.DISH_CREATED);
     }
 
     @Override
     public DishResponseDto updateDish(UpdateDishRequestDto updateDishRequestDto, Long ownerId) {
         DishModel dishModel = dishRequestMapper.toDish(updateDishRequestDto);
         dishServicePort.updateDish(dishModel, ownerId);
-        return dishResponseMapper.toResponse("The dish has been updated successfully", dishModel.getId());
+        return dishResponseMapper.toResponse(dishModel.getId(), DishMessages.DISH_UPDATED);
     }
 
     @Override
     public DishResponseDto enableOrDisableDish(EnableDishRequestDto enableDishRequestDto, Long ownerId) {
         DishModel dishModel = dishRequestMapper.toDish(enableDishRequestDto);
         dishServicePort.enableOrDisableDish(dishModel, ownerId);
-        String response = "";
-        if(Boolean.TRUE.equals(enableDishRequestDto.getActive())) {
-            response = "The dish has been enabled successfully";
-        } else {
-            response = "The dish has been disabled successfully";
-        }
-        return dishResponseMapper.toResponse(response, dishModel.getId());
+        String response = Boolean.TRUE.equals(enableDishRequestDto.getActive())
+                ? DishMessages.DISH_ENABLED
+                : DishMessages.DISH_DISABLED;
+        return dishResponseMapper.toResponse(dishModel.getId(), response);
     }
 }

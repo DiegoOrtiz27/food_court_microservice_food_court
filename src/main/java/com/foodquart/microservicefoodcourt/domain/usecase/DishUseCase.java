@@ -8,6 +8,7 @@ import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantExc
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
+import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
 
 import java.util.Optional;
 
@@ -16,8 +17,7 @@ public class DishUseCase implements IDishServicePort {
     private final IDishPersistencePort dishPersistencePort;
     private final IRestaurantPersistencePort restaurantPersistencePort;
 
-    public DishUseCase(IDishPersistencePort dishPersistencePort,
-                       IRestaurantPersistencePort restaurantPersistencePort) {
+    public DishUseCase(IDishPersistencePort dishPersistencePort,IRestaurantPersistencePort restaurantPersistencePort) {
         this.dishPersistencePort = dishPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
     }
@@ -67,7 +67,7 @@ public class DishUseCase implements IDishServicePort {
 
     private void validateDish(DishModel dish) {
         if (dish.getPrice() <= 0) {
-            throw new DomainException("Price must be positive");
+            throw new DomainException(DishMessages.PRICE_MUST_BE_POSITIVE);
         }
     }
 

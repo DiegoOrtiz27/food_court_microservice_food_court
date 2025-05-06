@@ -1,0 +1,15 @@
+package com.foodquart.microservicefoodcourt.domain.util;
+
+public class RestaurantMessages {
+
+    public static final String RESTAURANT_CREATED = "The restaurant has been created successfully";
+
+    public static final String NAME_NUMBERS_ONLY = "Restaurant name cannot contain only numbers";
+    public static final String NIT_NUMBERS_ONLY = "NIT must contain only numbers";
+    public static final String INVALID_PHONE_FORMAT = "Phone should have maximum 13 characters and can include '+'";
+    public static final String NIT_ALREADY_EXISTS = "Restaurant with NIT '%s' already exists";
+
+    private RestaurantMessages() {
+        throw new AssertionError("Utility class should not be instantiated");
+    }
+}
