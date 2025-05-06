@@ -6,6 +6,9 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.entity.Restaur
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IRestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @RequiredArgsConstructor
 public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
@@ -32,5 +35,12 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
     @Override
     public boolean existsById(Long id) {
         return restaurantRepository.existsById(id);
+    }
+
+    @Override
+    public Page<RestaurantModel> getAllRestaurants(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        return restaurantRepository.findAll(pageRequest)
+                .map(restaurantEntityMapper::toRestaurantModel);
     }
 }

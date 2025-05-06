@@ -8,5 +8,5 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE)
 public interface IDishResponseMapper {
-    DishResponseDto toResponse(String response, Long dishId);
+    DishResponseDto toResponse(Long dishId, String response);
 }

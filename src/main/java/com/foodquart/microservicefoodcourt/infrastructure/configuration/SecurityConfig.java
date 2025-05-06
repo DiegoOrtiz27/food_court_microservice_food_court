@@ -20,6 +20,7 @@ public class SecurityConfig {
 
     private static final String ADMIN = "ADMIN";
     private static final String OWNER = "OWNER";
+    private static final String CUSTOMER = "CUSTOMER";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -34,6 +35,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurant/").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/restaurant/").hasRole(CUSTOMER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/*/employees/").hasRole(OWNER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/dishes/").hasRole(OWNER)
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").hasRole(OWNER)
