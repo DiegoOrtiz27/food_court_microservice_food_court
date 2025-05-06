@@ -1,6 +1,6 @@
 package com.foodquart.microservicefoodcourt.application.mapper;
 
-import com.foodquart.microservicefoodcourt.application.dto.GetRestaurantResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.RestaurantResponseDto;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import org.mapstruct.Mapper;
@@ -12,5 +12,5 @@ import org.mapstruct.ReportingPolicy;
 public interface IRestaurantResponseMapper {
     RestaurantResponseDto toResponse(Long restaurantId, String response);
 
-    GetRestaurantResponseDto toResponse(RestaurantModel restaurantModel);
+    RestaurantListResponseDto toResponse(RestaurantModel restaurantModel);
 }

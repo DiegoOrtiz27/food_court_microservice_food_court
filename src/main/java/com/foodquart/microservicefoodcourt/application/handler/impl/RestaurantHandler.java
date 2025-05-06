@@ -1,6 +1,6 @@
 package com.foodquart.microservicefoodcourt.application.handler.impl;
 
-import com.foodquart.microservicefoodcourt.application.dto.GetRestaurantResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.RestaurantListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.RestaurantResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.IRestaurantRequestMapper;
@@ -31,7 +31,7 @@ public class RestaurantHandler implements IRestaurantHandler {
     }
 
     @Override
-    public Page<GetRestaurantResponseDto> getAllRestaurants(int page, int size) {
+    public Page<RestaurantListResponseDto> getAllRestaurants(int page, int size) {
         Page<RestaurantModel> restaurantModels = restaurantServicePort.getAllRestaurants(page, size);
         return restaurantModels.map(restaurantResponseMapper::toResponse);
     }

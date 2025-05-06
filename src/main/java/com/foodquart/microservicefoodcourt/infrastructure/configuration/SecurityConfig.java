@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/*/employees/").hasRole(OWNER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/dishes/").hasRole(OWNER)
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").hasRole(OWNER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/dishes/restaurant/*").hasRole(CUSTOMER)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

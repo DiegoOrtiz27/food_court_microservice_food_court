@@ -9,6 +9,7 @@ import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
+import org.springframework.data.domain.Page;
 
 import java.util.Optional;
 
@@ -63,6 +64,14 @@ public class DishUseCase implements IDishServicePort {
             dish.setActive(dishModel.getActive());
             return dishPersistencePort.updateDishStatus(dish);
         }).orElse(null);
+    }
+
+    @Override
+    public Page<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
+        if (!restaurantPersistencePort.existsById(restaurantId)) {
+            throw new InvalidRestaurantException(restaurantId);
+        }
+        return dishPersistencePort.findByRestaurantIdAndCategory(restaurantId, category, page, size);
     }
 
     private void validateDish(DishModel dish) {
