@@ -12,6 +12,6 @@ public interface IDishPersistencePort {
 
     DishModel updateDish(DishModel dishModel);
 
-
+    DishModel updateDishStatus(DishModel dishModel);
 
 }
