@@ -55,12 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email = jwtProviderPort.getEmailFromToken(token);
+        Long id = jwtProviderPort.getIdFromToken(token);
         String role = jwtProviderPort.getRoleFromToken(token);
 
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
+        Authentication auth = new UsernamePasswordAuthenticationToken(id, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         filterChain.doFilter(request, response);

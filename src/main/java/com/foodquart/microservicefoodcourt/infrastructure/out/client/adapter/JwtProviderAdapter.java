@@ -31,9 +31,9 @@ public class JwtProviderAdapter implements IJwtProviderPort {
     }
 
     @Override
-    public String getEmailFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject();
+    public Long getIdFromToken(String token) {
+        return Long.valueOf(Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token).getBody().getSubject());
     }
 
     @Override

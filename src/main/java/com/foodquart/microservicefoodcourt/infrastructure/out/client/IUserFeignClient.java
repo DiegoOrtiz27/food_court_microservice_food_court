@@ -1,11 +1,11 @@
 package com.foodquart.microservicefoodcourt.infrastructure.out.client;
 
 import com.foodquart.microservicefoodcourt.infrastructure.configuration.FeignConfig;
-import com.foodquart.microservicefoodcourt.infrastructure.out.client.dto.GetUserByEmailResponseDto;
-import com.foodquart.microservicefoodcourt.infrastructure.out.client.dto.HasRoleResponseDto;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.dto.CreateEmployeeRequestDto;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.dto.CreateEmployeeResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
         name = "microserviceuser",
@@ -14,9 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 )
 public interface IUserFeignClient {
 
-    @GetMapping("/api/v1/roles/{userId}/has/{roleName}")
-    HasRoleResponseDto hasRole(@PathVariable("userId") Long userId, @PathVariable("roleName") String roleName);
+    @PostMapping("/api/v1/user/createEmployee")
+    CreateEmployeeResponseDto createEmployee(@RequestBody CreateEmployeeRequestDto createEmployeeRequestDto);
 
-    @GetMapping("/api/v1/user/email")
-    GetUserByEmailResponseDto getUserByEmail();
+
 }

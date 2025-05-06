@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,8 +28,8 @@ public class DishRestController {
     @PostMapping("/")
     public ResponseEntity<Void> createDish(
             @Valid @RequestBody DishRequestDto dishRequestDto) {
-
-        dishHandler.createDish(dishRequestDto);
+        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+        dishHandler.createDish(dishRequestDto, id);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -43,8 +44,9 @@ public class DishRestController {
             @PathVariable("id") Long dishId,
             @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
 
+        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         updateDishRequestDto.setId(dishId);
-        dishHandler.updateDish(updateDishRequestDto);
+        dishHandler.updateDish(updateDishRequestDto, id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

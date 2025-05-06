@@ -1,6 +1,8 @@
 package com.foodquart.microservicefoodcourt.infrastructure.exceptionhandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foodquart.microservicefoodcourt.domain.exception.*;
+import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -8,7 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -82,8 +86,37 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex) {
+        Optional<ErrorResponse> errorResponseOptional = parseFeignError(ex);
+        if (errorResponseOptional.isPresent()) {
+            return new ResponseEntity<>(errorResponseOptional.get(), HttpStatus.CONFLICT);
+        }
+        ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", "Error communicating with another service.");
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private Optional<ErrorResponse> parseFeignError(FeignException ex) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return ex.responseBody()
+                    .flatMap(responseBody -> {
+                        try {
+                            String errorBody = new String(responseBody.array());
+                            return Optional.ofNullable(objectMapper.readValue(errorBody, ErrorResponse.class));
+                        } catch (IOException e) {
+                            return Optional.empty();
+                        }
+                    });
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ex.printStackTrace();
         ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred.");
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
