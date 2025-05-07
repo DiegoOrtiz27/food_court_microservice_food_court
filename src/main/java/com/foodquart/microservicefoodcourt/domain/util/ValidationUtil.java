@@ -1,6 +1,7 @@
 package com.foodquart.microservicefoodcourt.domain.util;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
+import com.foodquart.microservicefoodcourt.domain.model.OrderModel;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 
 public class ValidationUtil {
@@ -17,6 +18,20 @@ public class ValidationUtil {
         }
         if (!restaurant.getPhone().matches(PHONE_REGEX)) {
             throw new DomainException(RestaurantMessages.INVALID_PHONE_FORMAT);
+        }
+    }
+
+    public static void validateOrderCreation(OrderModel orderModel) throws DomainException {
+        if (orderModel.getCustomerId() == null) {
+            throw new DomainException(OrderMessages.CUSTOMER_ID_REQUIRED);
+        }
+
+        if (orderModel.getRestaurantId() == null) {
+            throw new DomainException(OrderMessages.RESTAURANT_ID_REQUIRED);
+        }
+
+        if (orderModel.getItems() == null || orderModel.getItems().isEmpty()) {
+            throw new DomainException(OrderMessages.ORDER_ITEMS_REQUIRED);
         }
     }
 

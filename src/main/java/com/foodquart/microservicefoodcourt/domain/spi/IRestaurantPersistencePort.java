@@ -4,6 +4,7 @@ import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import org.springframework.data.domain.Page;
 
 public interface IRestaurantPersistencePort {
+
     RestaurantModel saveRestaurant(RestaurantModel restaurantModel);
 
     boolean existsByNit(String nit);

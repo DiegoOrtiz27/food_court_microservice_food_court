@@ -46,7 +46,7 @@ class DishUseCaseTest {
         validDish.setImageUrl("https://img.com/ensalada.jpg");
         validDish.setCategory("Starter");
         validDish.setRestaurantId(5L);
-        ownerId = 10L; // Establecer un ownerId para las pruebas
+        ownerId = 10L;
     }
 
     @Nested
@@ -84,7 +84,6 @@ class DishUseCaseTest {
             InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
                     () -> dishUseCase.createDish(validDish, ownerId));
 
-            // Mensaje de error corregido
             assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
             verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
             verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, validDish.getRestaurantId());
