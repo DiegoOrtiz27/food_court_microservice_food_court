@@ -13,6 +13,7 @@ import com.foodquart.microservicefoodcourt.domain.util.*;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public class OrderUseCase implements IOrderServicePort {
 
@@ -36,7 +37,7 @@ public class OrderUseCase implements IOrderServicePort {
             throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, orderModel.getRestaurantId()));
         }
 
-        if (orderPersistencePort.hasActiveOrders(orderModel.getCustomerId())) {
+        if (orderPersistencePort.hasActiveOrders(orderModel.getCustomerId(), OrderStatus.getActiveStatuses())) {
             throw new DomainException(OrderMessages.CUSTOMER_HAS_ACTIVE_ORDER);
         }
 
@@ -72,4 +73,26 @@ public class OrderUseCase implements IOrderServicePort {
         }
         return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);
     }
+
+    public OrderModel assignOrderToEmployee(Long orderId, Long employeeId) {
+        Optional<OrderModel> existingOrder = orderPersistencePort.findById(orderId);
+
+        if(existingOrder.isEmpty()) {
+            throw new DomainException(String.format(OrderMessages.ORDER_NOT_FOUND, orderId));
+        }
+
+        if(!existingOrder.get().getStatus().isNotAssignedStatus()) {
+            throw new DomainException(OrderMessages.ORDER_ALREADY_ASSIGNED);
+        }
+
+        return existingOrder.map(order -> {
+            if (!restaurantPersistencePort.existsById(order.getRestaurantId())) {
+                throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, order.getRestaurantId()));
+            }
+            order.setStatus(OrderStatus.IN_PREPARATION);
+            order.setAssignedEmployeeId(employeeId);
+            return orderPersistencePort.updateOrder(order);
+        }).orElse(null);
+    }
+
 }

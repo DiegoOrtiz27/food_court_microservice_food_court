@@ -2,6 +2,8 @@ package com.foodquart.microservicefoodcourt.domain.util;
 
 public class OrderMessages {
     public static final String CREATED_ORDER = "The order has been created successfully";
+    public static final String ASSIGNED_ORDER = "The order has been assigned successfully";
+    public static final String ORDER_ALREADY_ASSIGNED = "The order is already assigned";
     public static final String CUSTOMER_ID_REQUIRED = "Customer ID is required";
     public static final String RESTAURANT_ID_REQUIRED = "Restaurant ID is required";
     public static final String ORDER_ITEMS_REQUIRED = "Order must have at least one item";

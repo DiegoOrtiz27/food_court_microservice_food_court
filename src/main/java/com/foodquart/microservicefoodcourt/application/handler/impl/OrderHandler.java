@@ -34,4 +34,10 @@ public class OrderHandler implements IOrderHandler {
         Page<OrderModel> orderModel = orderServicePort.getOrdersByRestaurant(employeeId, restaurantId, status, page, size);
         return orderModel.map(orderResponseMapper::toResponse);
     }
+
+    @Override
+    public OrderResponseDto assignOrderToEmployee(Long orderId, Long employeeId) {
+        OrderModel orderModel = orderServicePort.assignOrderToEmployee(orderId, employeeId);
+        return orderResponseMapper.toResponse(orderModel.getId(), orderModel.getStatus().toString(), OrderMessages.ASSIGNED_ORDER);
+    }
 }
