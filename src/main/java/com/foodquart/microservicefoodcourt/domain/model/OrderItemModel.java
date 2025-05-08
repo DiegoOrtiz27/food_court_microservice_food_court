@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItemModel {
-    private Long dishId;
+    private Long id;
     private int quantity;
+    private DishModel dish;
 }

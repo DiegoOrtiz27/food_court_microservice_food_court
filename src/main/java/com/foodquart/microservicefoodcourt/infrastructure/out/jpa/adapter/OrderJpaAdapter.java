@@ -7,6 +7,8 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.entity.OrderEn
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.mapper.IOrderEntityMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IOrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
     @Override
     public OrderModel saveOrder(OrderModel orderModel) {
         OrderEntity orderEntity = orderEntityMapper.toEntity(orderModel);
-        return orderEntityMapper.toModel(orderRepository.save(orderEntity));
+        return orderEntityMapper.toOrderModel(orderRepository.save(orderEntity));
     }
 
     @Override
@@ -28,5 +30,13 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
                 customerId,
                 List.of(OrderStatus.PENDING, OrderStatus.IN_PREPARATION, OrderStatus.READY)
         ) > 0;
+    }
+
+    @Override
+    public Page<OrderModel> findByRestaurantIdAndStatus(Long restaurantId, OrderStatus status, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return (status == null || status.toString().isEmpty())
+                ? orderRepository.findByRestaurantId(restaurantId, pageRequest).map(orderEntityMapper::toOrderModel)
+                : orderRepository.findByRestaurantIdAndStatus(restaurantId, status, pageRequest).map(orderEntityMapper::toOrderModel);
     }
 }

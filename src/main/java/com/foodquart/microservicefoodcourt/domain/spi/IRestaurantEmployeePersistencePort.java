@@ -5,4 +5,6 @@ import com.foodquart.microservicefoodcourt.domain.model.RestaurantEmployeeModel;
 public interface IRestaurantEmployeePersistencePort {
 
     RestaurantEmployeeModel addEmployeeToRestaurant(RestaurantEmployeeModel restaurantEmployeeModel);
+
+    boolean existsByEmployeeIdAndRestaurantId(Long employeeId, Long restaurantId);
 }

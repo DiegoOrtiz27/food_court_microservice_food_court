@@ -47,7 +47,7 @@ public class DishHandler implements IDishHandler {
 
     @Override
     public Page<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
-        Page<DishModel> dishModels = dishServicePort.getDishesByRestaurant(restaurantId, category, page, size);
-        return dishModels.map(dishResponseMapper::toResponse);
+        Page<DishModel> dishModel = dishServicePort.getDishesByRestaurant(restaurantId, category, page, size);
+        return dishModel.map(dishResponseMapper::toResponse);
     }
 }

@@ -5,6 +5,7 @@ public class RestaurantMessages {
     public static final String RESTAURANT_CREATED = "The restaurant has been created successfully";
     public static final String EMPLOYEE_CREATED = "The employee has been created successfully";
     public static final String RESTAURANT_NOT_FOUND = "Restaurant with id '%d' not found";
+    public static final String EMPLOYEE_NOT_ASSOCIATED_TO_RESTAURANT = "Employee is not associated with restaurant with id '%d'";
 
     public static final String NAME_NUMBERS_ONLY = "Restaurant name cannot contain only numbers";
     public static final String NIT_NUMBERS_ONLY = "NIT must contain only numbers";

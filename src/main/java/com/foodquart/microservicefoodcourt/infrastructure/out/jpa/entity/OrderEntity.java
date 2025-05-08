@@ -4,6 +4,7 @@ import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -31,6 +32,12 @@ public class OrderEntity {
 
     @Column(name = "security_pin", length = 6)
     private String securityPin;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
