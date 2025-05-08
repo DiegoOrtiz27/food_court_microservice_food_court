@@ -19,4 +19,9 @@ public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersiste
         return restaurantEmployeeEntityMapper.toRestaurantEmployeeModel(saved);
     }
 
+    @Override
+    public boolean existsByEmployeeIdAndRestaurantId(Long employeeId, Long restaurantId) {
+        return restaurantEmployeeRepository.existsByEmployeeIdAndRestaurantId(employeeId, restaurantId);
+    }
+
 }

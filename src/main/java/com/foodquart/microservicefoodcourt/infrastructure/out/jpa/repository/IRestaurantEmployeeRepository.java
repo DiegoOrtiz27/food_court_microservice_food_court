@@ -4,4 +4,5 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.entity.Restaur
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IRestaurantEmployeeRepository extends JpaRepository<RestaurantEmployeeEntity, Long> {
+    boolean existsByEmployeeIdAndRestaurantId(Long employeeId, Long restaurantId);
 }

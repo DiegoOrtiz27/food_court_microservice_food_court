@@ -21,6 +21,7 @@ public class SecurityConfig {
     private static final String ADMIN = "ADMIN";
     private static final String OWNER = "OWNER";
     private static final String CUSTOMER = "CUSTOMER";
+    private static final String EMPLOYEE = "EMPLOYEE";
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -41,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/dishes/**").hasRole(OWNER)
                         .requestMatchers(HttpMethod.GET, "/api/v1/dishes/restaurant/*").hasRole(CUSTOMER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/").hasRole(CUSTOMER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders/restaurant/*").hasRole(EMPLOYEE)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

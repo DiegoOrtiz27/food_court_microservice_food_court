@@ -20,7 +20,7 @@ public class OrderMapperHelper {
                 itemEntity.setOrder(orderEntity);
 
                 DishEntity dish = new DishEntity();
-                dish.setId(itemModel.getDishId());
+                dish.setId(itemModel.getDish().getId());
                 itemEntity.setDish(dish);
             }
         }
