@@ -1,7 +1,7 @@
 package com.foodquart.microservicefoodcourt.application.handler.impl;
 
-import com.foodquart.microservicefoodcourt.application.dto.CreateRestaurantEmployeeRequestDto;
-import com.foodquart.microservicefoodcourt.application.dto.CreateRestaurantEmployeeResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.CreateRestaurantEmployeeRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.CreateRestaurantEmployeeResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IRestaurantEmployeeHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.IRestaurantEmployeeRequestMapper;
 import com.foodquart.microservicefoodcourt.application.mapper.IRestaurantEmployeeResponseMapper;

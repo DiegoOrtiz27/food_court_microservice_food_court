@@ -11,4 +11,6 @@ public interface IOrderServicePort {
     Page<OrderModel> getOrdersByRestaurant(Long employeeId, Long restaurantId, OrderStatus status, int page, int size);
 
     OrderModel assignOrderToEmployee(Long orderId, Long employeeId);
+
+    OrderModel notifyOrderReady(Long orderId, Long employeeId);
 }

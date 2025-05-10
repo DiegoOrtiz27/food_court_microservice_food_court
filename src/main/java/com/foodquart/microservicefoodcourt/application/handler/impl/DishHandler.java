@@ -1,6 +1,10 @@
 package com.foodquart.microservicefoodcourt.application.handler.impl;
 
-import com.foodquart.microservicefoodcourt.application.dto.*;
+import com.foodquart.microservicefoodcourt.application.dto.request.DishRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.EnableDishRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.UpdateDishRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.DishListResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.DishResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.IDishRequestMapper;
 import com.foodquart.microservicefoodcourt.application.mapper.IDishResponseMapper;

@@ -1,10 +1,11 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerException;
+import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantEmployeeModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantEmployeePersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
+import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,10 +56,10 @@ class RestaurantEmployeeUseCaseTest {
         when(restaurantPersistencePort.isOwnerOfRestaurant(validOwnerId, validRestaurantId))
                 .thenReturn(false);
 
-        InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+        DomainException exception = assertThrows(DomainException.class,
                 () -> restaurantEmployeeUseCase.addEmployeeToRestaurant(validOwnerId, validEmployee));
 
-        assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+        assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, validRestaurantId), exception.getMessage());
         verify(restaurantPersistencePort).isOwnerOfRestaurant(validOwnerId, validRestaurantId);
         verifyNoInteractions(userClientPort, employeePersistence);
     }

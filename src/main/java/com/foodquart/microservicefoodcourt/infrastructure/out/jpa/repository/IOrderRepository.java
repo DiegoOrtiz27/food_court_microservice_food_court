@@ -22,4 +22,7 @@ public interface IOrderRepository extends JpaRepository<OrderEntity, Long> {
     @EntityGraph(attributePaths = {"items", "items.dish"})
     Page<OrderEntity> findByRestaurantIdAndStatus(Long restaurantId, OrderStatus status, Pageable pageable);
 
+    @Query("SELECT COUNT(o) FROM OrderEntity o WHERE o.assignedEmployeeId = :employeeId AND o.id = :orderId")
+    long countByEmployeeIdAndOrderId(Long employeeId, Long orderId);
+
 }

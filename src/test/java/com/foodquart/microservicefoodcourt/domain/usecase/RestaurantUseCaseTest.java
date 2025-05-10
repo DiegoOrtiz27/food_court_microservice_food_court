@@ -1,9 +1,9 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
-import com.foodquart.microservicefoodcourt.domain.exception.NitAlreadyExistsException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
+import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,7 +52,7 @@ class RestaurantUseCaseTest {
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> restaurantUseCase.saveRestaurant(validRestaurant));
-            assertEquals("Restaurant name cannot contain only numbers", exception.getMessage());
+            assertEquals(RestaurantMessages.NAME_NUMBERS_ONLY, exception.getMessage());
 
             verifyNoInteractions(restaurantPersistencePort);
         }
@@ -64,7 +64,7 @@ class RestaurantUseCaseTest {
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> restaurantUseCase.saveRestaurant(validRestaurant));
-            assertEquals("NIT must contain only numbers", exception.getMessage());
+            assertEquals(RestaurantMessages.NIT_NUMBERS_ONLY, exception.getMessage());
 
             verifyNoInteractions(restaurantPersistencePort);
         }
@@ -76,7 +76,7 @@ class RestaurantUseCaseTest {
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> restaurantUseCase.saveRestaurant(validRestaurant));
-            assertEquals("Phone should have maximum 13 characters and can include '+'", exception.getMessage());
+            assertEquals(RestaurantMessages.INVALID_PHONE_FORMAT, exception.getMessage());
 
             verifyNoInteractions(restaurantPersistencePort);
         }
@@ -86,7 +86,7 @@ class RestaurantUseCaseTest {
         void saveRestaurantWhenNitExistsThrowsNitAlreadyExistsException() {
             when(restaurantPersistencePort.existsByNit(validRestaurant.getNit())).thenReturn(true);
 
-            assertThrows(NitAlreadyExistsException.class,
+            assertThrows(DomainException.class,
                     () -> restaurantUseCase.saveRestaurant(validRestaurant));
 
             verify(restaurantPersistencePort).existsByNit(validRestaurant.getNit());
@@ -100,7 +100,7 @@ class RestaurantUseCaseTest {
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> restaurantUseCase.saveRestaurant(validRestaurant));
-            assertEquals("Phone should have maximum 13 characters and can include '+'", exception.getMessage());
+            assertEquals(RestaurantMessages.INVALID_PHONE_FORMAT, exception.getMessage());
 
             verifyNoInteractions(restaurantPersistencePort);
         }

@@ -2,13 +2,11 @@ package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidDishException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantException;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
+import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.springframework.data.domain.Page;
 
 import java.util.Optional;
@@ -28,11 +26,11 @@ public class DishUseCase implements IDishServicePort {
         validateDish(dishModel);
 
         if (!restaurantPersistencePort.existsById(dishModel.getRestaurantId())) {
-            throw new InvalidRestaurantException(dishModel.getRestaurantId());
+            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, dishModel.getRestaurantId()));
         }
 
         if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, dishModel.getRestaurantId())) {
-            throw new InvalidOwnerException(dishModel.getRestaurantId());
+            throw new DomainException(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, dishModel.getRestaurantId()));
         }
 
         dishModel.setActive(true);
@@ -69,7 +67,7 @@ public class DishUseCase implements IDishServicePort {
     @Override
     public Page<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
         if (!restaurantPersistencePort.existsById(restaurantId)) {
-            throw new InvalidRestaurantException(restaurantId);
+            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId));
         }
         return dishPersistencePort.findByRestaurantIdAndCategory(restaurantId, category, page, size);
     }
@@ -83,7 +81,7 @@ public class DishUseCase implements IDishServicePort {
     private Optional<DishModel> validateExistingDish(Long dishId) {
         Optional<DishModel> existingDish = dishPersistencePort.findById(dishId);
         if(existingDish.isEmpty()) {
-            throw new InvalidDishException(dishId);
+            throw new DomainException(String.format(DishMessages.DISH_NOT_FOUND, dishId));
         }
         return existingDish;
     }
@@ -91,11 +89,11 @@ public class DishUseCase implements IDishServicePort {
     private void validateUpdateDish(Long restaurantId, Long ownerId) {
 
         if (!restaurantPersistencePort.existsById(restaurantId)) {
-            throw new InvalidRestaurantException(restaurantId);
+            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId));
         }
 
         if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)) {
-            throw new InvalidOwnerException(restaurantId);
+            throw new DomainException(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, restaurantId));
         }
     }
 }

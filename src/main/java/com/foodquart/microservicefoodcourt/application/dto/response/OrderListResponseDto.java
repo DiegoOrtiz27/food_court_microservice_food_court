@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.application.dto;
+package com.foodquart.microservicefoodcourt.application.dto.response;
 
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
 

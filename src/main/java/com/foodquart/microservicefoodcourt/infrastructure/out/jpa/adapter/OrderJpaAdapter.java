@@ -55,4 +55,12 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
         return orderEntityMapper.toOrderModel(updatedEntity);
     }
 
+    @Override
+    public boolean hasAssignedOrder(Long employeeId, Long orderId) {
+         return orderRepository.countByEmployeeIdAndOrderId(
+                employeeId,
+                orderId
+        ) > 0;
+    }
+
 }
