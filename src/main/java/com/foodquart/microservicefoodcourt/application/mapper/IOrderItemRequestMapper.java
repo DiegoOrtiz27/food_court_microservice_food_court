@@ -1,6 +1,6 @@
 package com.foodquart.microservicefoodcourt.application.mapper;
 
-import com.foodquart.microservicefoodcourt.application.dto.OrderItemRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.OrderItemRequestDto;
 import com.foodquart.microservicefoodcourt.domain.model.OrderItemModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

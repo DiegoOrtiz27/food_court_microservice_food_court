@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class OrderJpaAdapter implements IOrderPersistencePort {
@@ -24,11 +25,12 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
         return orderEntityMapper.toOrderModel(orderRepository.save(orderEntity));
     }
 
+
     @Override
-    public boolean hasActiveOrders(Long customerId) {
+    public boolean hasActiveOrders(Long customerId, List<OrderStatus> statuses) {
         return orderRepository.countByCustomerIdAndStatusIn(
                 customerId,
-                List.of(OrderStatus.PENDING, OrderStatus.IN_PREPARATION, OrderStatus.READY)
+                statuses
         ) > 0;
     }
 
@@ -39,4 +41,26 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
                 ? orderRepository.findByRestaurantId(restaurantId, pageRequest).map(orderEntityMapper::toOrderModel)
                 : orderRepository.findByRestaurantIdAndStatus(restaurantId, status, pageRequest).map(orderEntityMapper::toOrderModel);
     }
+
+    @Override
+    public Optional<OrderModel> findById(Long id) {
+        return orderRepository.findById(id)
+                .map(orderEntityMapper::toOrderModel);
+    }
+
+    @Override
+    public OrderModel updateOrder(OrderModel order) {
+        OrderEntity orderEntity = orderEntityMapper.toEntity(order);
+        OrderEntity updatedEntity = orderRepository.save(orderEntity);
+        return orderEntityMapper.toOrderModel(updatedEntity);
+    }
+
+    @Override
+    public boolean hasAssignedOrder(Long employeeId, Long orderId) {
+         return orderRepository.countByEmployeeIdAndOrderId(
+                employeeId,
+                orderId
+        ) > 0;
+    }
+
 }

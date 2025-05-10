@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.infrastructure.out.client.dto;
+package com.foodquart.microservicefoodcourt.infrastructure.out.client.dto.response;
 
 import lombok.*;
 

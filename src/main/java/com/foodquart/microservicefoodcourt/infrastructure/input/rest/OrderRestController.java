@@ -1,8 +1,8 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
-import com.foodquart.microservicefoodcourt.application.dto.OrderListResponseDto;
-import com.foodquart.microservicefoodcourt.application.dto.OrderRequestDto;
-import com.foodquart.microservicefoodcourt.application.dto.OrderResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IOrderHandler;
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,5 +43,27 @@ public class OrderRestController {
 
         Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(orderHandler.getOrdersByRestaurant(employeeId, restaurantId, status, page, size));
+    }
+
+    @Operation(summary = "Assign order to employee")
+    @ApiResponse(responseCode = "204", description = "Order assigned successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "403", description = "Not authorized")
+    @PatchMapping("/{id}")
+    public ResponseEntity<OrderResponseDto> assignOrderToEmployee(
+            @PathVariable("id") Long orderId) {
+        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+        return ResponseEntity.ok(orderHandler.assignOrderToEmployee(orderId, employeeId));
+    }
+
+    @Operation(summary = "Notify order ready")
+    @ApiResponse(responseCode = "204", description = "Order notified successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "403", description = "Not authorized")
+    @PatchMapping("notifyOrderReady/{id}")
+    public ResponseEntity<OrderResponseDto> notifyOrderReady(
+            @PathVariable("id") Long orderId) {
+        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+        return ResponseEntity.ok(orderHandler.notifyOrderReady(orderId, employeeId));
     }
 }

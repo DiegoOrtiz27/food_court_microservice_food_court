@@ -1,12 +1,11 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidDishException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidOwnerException;
-import com.foodquart.microservicefoodcourt.domain.exception.InvalidRestaurantException;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
+import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
+import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,10 +67,10 @@ class DishUseCaseTest {
         void shouldThrowInvalidRestaurantExceptionWhenRestaurantDoesNotExist() {
             when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(false);
 
-            InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.createDish(validDish, ownerId));
 
-            assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, validDish.getRestaurantId()), exception.getMessage());
             verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
             verifyNoMoreInteractions(restaurantPersistencePort, dishPersistencePort);
         }
@@ -81,10 +80,10 @@ class DishUseCaseTest {
             when(restaurantPersistencePort.existsById(validDish.getRestaurantId())).thenReturn(true);
             when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, validDish.getRestaurantId())).thenReturn(false);
 
-            InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.createDish(validDish, ownerId));
 
-            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, validDish.getRestaurantId()), exception.getMessage());
             verify(restaurantPersistencePort).existsById(validDish.getRestaurantId());
             verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, validDish.getRestaurantId());
             verifyNoMoreInteractions(restaurantPersistencePort, dishPersistencePort);
@@ -117,7 +116,7 @@ class DishUseCaseTest {
             DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.updateDish(validDish, ownerId));
 
-            assertEquals("Price must be positive", exception.getMessage());
+            assertEquals(DishMessages.PRICE_MUST_BE_POSITIVE, exception.getMessage());
             verifyNoInteractions(dishPersistencePort, restaurantPersistencePort);
         }
 
@@ -129,10 +128,10 @@ class DishUseCaseTest {
             when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
             when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(false);
 
-            InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.updateDish(validDish, ownerId));
 
-            assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, validDish.getRestaurantId()), exception.getMessage());
             verify(dishPersistencePort).findById(validDish.getId());
             verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
             verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
@@ -147,11 +146,10 @@ class DishUseCaseTest {
             when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
             when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(false);
 
-            InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.updateDish(validDish, ownerId));
 
-            // Mensaje de error corregido
-            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, validDish.getRestaurantId()), exception.getMessage());
             verify(dishPersistencePort).findById(validDish.getId());
             verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
             verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());
@@ -199,10 +197,10 @@ class DishUseCaseTest {
         void shouldThrowInvalidDishExceptionWhenDishNotFound() {
             when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.empty());
 
-            InvalidDishException exception = assertThrows(InvalidDishException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
 
-            assertEquals("Dish with id '1' not found", exception.getMessage());
+            assertEquals(String.format(DishMessages.DISH_NOT_FOUND, validDish.getId()), exception.getMessage());
             verify(dishPersistencePort).findById(validDish.getId());
             verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
         }
@@ -217,10 +215,10 @@ class DishUseCaseTest {
             when(dishPersistencePort.findById(validDish.getId())).thenReturn(Optional.of(existingDish));
             when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(false);
 
-            InvalidRestaurantException exception = assertThrows(InvalidRestaurantException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
 
-            assertEquals("The restaurant with id '5' does not exists", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, validDish.getRestaurantId()), exception.getMessage());
             verify(dishPersistencePort).findById(validDish.getId());
             verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
             verifyNoMoreInteractions(dishPersistencePort, restaurantPersistencePort);
@@ -237,10 +235,10 @@ class DishUseCaseTest {
             when(restaurantPersistencePort.existsById(existingDish.getRestaurantId())).thenReturn(true);
             when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId())).thenReturn(false);
 
-            InvalidOwnerException exception = assertThrows(InvalidOwnerException.class,
+            DomainException exception = assertThrows(DomainException.class,
                     () -> dishUseCase.enableOrDisableDish(validDish, ownerId));
 
-            assertEquals("User is not the owner of restaurant with ID 5", exception.getMessage());
+            assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, validDish.getRestaurantId()), exception.getMessage());
             verify(dishPersistencePort).findById(validDish.getId());
             verify(restaurantPersistencePort).existsById(existingDish.getRestaurantId());
             verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, existingDish.getRestaurantId());

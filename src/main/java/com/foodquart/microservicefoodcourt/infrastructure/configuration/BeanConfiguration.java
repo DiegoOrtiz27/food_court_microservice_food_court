@@ -9,9 +9,13 @@ import com.foodquart.microservicefoodcourt.domain.usecase.DishUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.OrderUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantEmployeeUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantUseCase;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.IMessagingFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IUserFeignClient;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.MessagingClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.UserClientAdapter;
-import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IEmployeeRequestMapper;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.INotificationRequestMapper;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IUserRequestMapper;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IUserResponseMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.DishJpaAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.OrderJpaAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.RestaurantEmployeeJpaAdapter;
@@ -45,7 +49,13 @@ public class BeanConfiguration {
     private final IOrderEntityMapper orderEntityMapper;
 
     private final IUserFeignClient userFeignClient;
-    private final IEmployeeRequestMapper employeeRequestMapper;
+    private final IUserRequestMapper userRequestMapper;
+    private final IUserResponseMapper userResponseMapper;
+
+    private final IMessagingFeignClient messagingFeignClient;
+    private final INotificationRequestMapper notificationRequestMapper;
+
+
 
     @Bean
     public IRestaurantPersistencePort restaurantPersistencePort() {
@@ -102,13 +112,23 @@ public class BeanConfiguration {
                 orderPersistencePort(),
                 dishPersistencePort(),
                 restaurantPersistencePort(),
-                restaurantEmployeePersistencePort());
+                restaurantEmployeePersistencePort(),
+                userClientPort(),
+                messagingClientPort());
     }
 
     @Bean
     public IUserClientPort userClientPort() {
         return new UserClientAdapter(
                 userFeignClient,
-                employeeRequestMapper);
+                userRequestMapper,
+                userResponseMapper);
+    }
+
+    @Bean
+    public IMessagingClientPort messagingClientPort() {
+        return  new MessagingClientAdapter(
+                messagingFeignClient,
+                notificationRequestMapper);
     }
 }

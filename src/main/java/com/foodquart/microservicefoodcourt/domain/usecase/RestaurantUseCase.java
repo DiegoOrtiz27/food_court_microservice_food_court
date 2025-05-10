@@ -1,7 +1,7 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.api.IRestaurantServicePort;
-import com.foodquart.microservicefoodcourt.domain.exception.NitAlreadyExistsException;
+import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
@@ -21,9 +21,7 @@ public class RestaurantUseCase implements IRestaurantServicePort {
         ValidationUtil.validateRestaurantData(restaurantModel);
 
         if (restaurantPersistencePort.existsByNit(restaurantModel.getNit())) {
-            throw new NitAlreadyExistsException(
-                    String.format(RestaurantMessages.NIT_ALREADY_EXISTS, restaurantModel.getNit())
-            );
+            throw new DomainException(String.format(RestaurantMessages.NIT_ALREADY_EXISTS, restaurantModel.getNit()));
         }
 
         return restaurantPersistencePort.saveRestaurant(restaurantModel);

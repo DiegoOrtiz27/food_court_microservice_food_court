@@ -6,6 +6,9 @@ public class SecurityMessages {
 
     public static final String MISSING_AUTH_HEADER = "Missing or invalid Authorization header";
     public static final String INVALID_EXPIRED_TOKEN = "Invalid or expired token";
+    public static final String NOT_FOUND = "The requested resource was not found";
+    public static final String UNAUTHORIZED = "Unauthorized when trying to '%s'";
+
 
     public static final Set<String> PUBLIC_PATHS = Set.of(
             "/swagger-ui.html",

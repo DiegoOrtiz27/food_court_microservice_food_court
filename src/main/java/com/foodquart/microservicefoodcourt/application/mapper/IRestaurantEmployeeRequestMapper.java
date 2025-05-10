@@ -1,6 +1,6 @@
 package com.foodquart.microservicefoodcourt.application.mapper;
 
-import com.foodquart.microservicefoodcourt.application.dto.CreateRestaurantEmployeeRequestDto;
+import com.foodquart.microservicefoodcourt.application.dto.request.CreateRestaurantEmployeeRequestDto;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantEmployeeModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;

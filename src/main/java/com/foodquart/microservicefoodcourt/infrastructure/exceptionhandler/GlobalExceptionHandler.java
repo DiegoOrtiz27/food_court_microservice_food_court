@@ -3,6 +3,7 @@ package com.foodquart.microservicefoodcourt.infrastructure.exceptionhandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foodquart.microservicefoodcourt.domain.exception.*;
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,43 +15,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(InvalidOwnerRoleException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidOwnerRole(InvalidOwnerRoleException ex) {
-        ErrorResponse error = new ErrorResponse("INVALID_OWNER_ROLE", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
         ErrorResponse error = new ErrorResponse("DOMAIN_ERROR", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(NitAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateNitException(NitAlreadyExistsException ex) {
-        ErrorResponse error = new ErrorResponse("DUPLICATE_NIT", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(InvalidRestaurantException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidRestaurant(InvalidRestaurantException ex) {
-        ErrorResponse error = new ErrorResponse("INVALID_RESTAURANT", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(InvalidOwnerException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidOwnerRestaurant(InvalidOwnerException ex) {
-        ErrorResponse error = new ErrorResponse("INVALID_OWNER_RESTAURANT", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(InvalidDishException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidDish(InvalidDishException ex) {
-        ErrorResponse error = new ErrorResponse("INVALID_DISH", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -64,6 +35,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoDataFoundException(UnauthorizedException ex) {
         ErrorResponse error = new ErrorResponse("UNAUTHORIZED", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        log.error("An unexpected error occurred: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred.");
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -111,13 +89,5 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             return Optional.empty();
         }
-    }
-
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ex.printStackTrace();
-        ErrorResponse error = new ErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred.");
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
