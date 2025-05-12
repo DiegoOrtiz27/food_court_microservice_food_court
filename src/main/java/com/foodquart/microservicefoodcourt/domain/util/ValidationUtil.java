@@ -35,7 +35,7 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateUpdateFields(Long orderId, Long employeeId) {
+    public static void validateUpdateEmployeeFields(Long orderId, Long employeeId) {
         if (orderId == null) {
             throw new DomainException(OrderMessages.ORDER_ID_REQUIRED);
         }
@@ -44,8 +44,17 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateUpdateCustomerFields(Long orderId, Long customerId) {
+        if (orderId == null) {
+            throw new DomainException(OrderMessages.ORDER_ID_REQUIRED);
+        }
+        if (customerId == null) {
+            throw new DomainException(OrderMessages.CUSTOMER_ID_REQUIRED);
+        }
+    }
+
     public static void validateDeliveryFields(Long orderId, Long employeeId, String securityPin) {
-        validateUpdateFields(orderId, employeeId);
+        validateUpdateEmployeeFields(orderId, employeeId);
         if (securityPin == null || securityPin.trim().isEmpty()) {
             throw new DomainException(OrderMessages.SECURITY_PIN_REQUIRED);
         }
