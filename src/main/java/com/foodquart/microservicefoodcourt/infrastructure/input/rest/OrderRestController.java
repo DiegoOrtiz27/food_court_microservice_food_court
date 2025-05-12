@@ -1,5 +1,6 @@
 package com.foodquart.microservicefoodcourt.infrastructure.input.rest;
 
+import com.foodquart.microservicefoodcourt.application.dto.request.OrderDeliveryRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
@@ -65,5 +66,17 @@ public class OrderRestController {
             @PathVariable("id") Long orderId) {
         Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(orderHandler.notifyOrderReady(orderId, employeeId));
+    }
+
+    @Operation(summary = "Mark order as delivered")
+    @ApiResponse(responseCode = "200", description = "Order marked as delivered successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data or invalid order status")
+    @ApiResponse(responseCode = "403", description = "Not authorized or invalid security pin")
+    @PatchMapping("deliverOrder/{id}")
+    public ResponseEntity<OrderResponseDto> markOrderAsDelivered(
+            @PathVariable("id") Long orderId,
+            @Valid @RequestBody OrderDeliveryRequestDto deliveryRequest) {
+        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+        return ResponseEntity.ok(orderHandler.markOrderAsDelivered(orderId, employeeId, deliveryRequest));
     }
 }

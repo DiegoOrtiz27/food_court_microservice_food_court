@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.application.mapper;
+package com.foodquart.microservicefoodcourt.application.mapper.response;
 
 import com.foodquart.microservicefoodcourt.application.dto.response.CreateRestaurantEmployeeResponseDto;
 import org.mapstruct.Mapper;

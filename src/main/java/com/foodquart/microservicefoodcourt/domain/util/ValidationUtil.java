@@ -35,6 +35,28 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateUpdateFields(Long orderId, Long employeeId) {
+        if (orderId == null) {
+            throw new DomainException(OrderMessages.ORDER_ID_REQUIRED);
+        }
+        if (employeeId == null) {
+            throw new DomainException(OrderMessages.EMPLOYEE_ID_REQUIRED);
+        }
+    }
+
+    public static void validateDeliveryFields(Long orderId, Long employeeId, String securityPin) {
+        validateUpdateFields(orderId, employeeId);
+        if (securityPin == null || securityPin.trim().isEmpty()) {
+            throw new DomainException(OrderMessages.SECURITY_PIN_REQUIRED);
+        }
+    }
+
+    public static void validateSecurityPin(String inputPin, String storedPin) {
+        if (!inputPin.equals(storedPin)) {
+            throw new DomainException(OrderMessages.INVALID_SECURITY_PIN);
+        }
+    }
+
     private ValidationUtil() {
         throw new AssertionError("Utility class should not be instantiated");
     }

@@ -8,6 +8,10 @@ spring:
     url: jdbc:mysql://localhost:3306/foodquart_foodcourt
     username: root
     password: 12345
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-null-for-primitives: true
 
   jpa:
     hibernate:

@@ -1,11 +1,12 @@
 package com.foodquart.microservicefoodcourt.application.handler.impl;
 
+import com.foodquart.microservicefoodcourt.application.dto.request.OrderDeliveryRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IOrderHandler;
-import com.foodquart.microservicefoodcourt.application.mapper.IOrderRequestMapper;
-import com.foodquart.microservicefoodcourt.application.mapper.IOrderResponseMapper;
+import com.foodquart.microservicefoodcourt.application.mapper.request.IOrderRequestMapper;
+import com.foodquart.microservicefoodcourt.application.mapper.response.IOrderResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IOrderServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.OrderModel;
 import com.foodquart.microservicefoodcourt.domain.util.OrderMessages;
@@ -47,5 +48,11 @@ public class OrderHandler implements IOrderHandler {
     public OrderResponseDto notifyOrderReady(Long orderId, Long employeeId) {
         OrderModel orderModel = orderServicePort.notifyOrderReady(orderId, employeeId);
         return orderResponseMapper.toResponse(orderModel.getId(), orderModel.getStatus().toString(), OrderMessages.ORDER_READY);
+    }
+
+    @Override
+    public OrderResponseDto markOrderAsDelivered(Long orderId, Long employeeId, OrderDeliveryRequestDto orderDeliveryRequestDto) {
+        OrderModel orderModel = orderServicePort.markOrderAsDelivered(orderId, employeeId, orderDeliveryRequestDto.getSecurityPin());
+        return orderResponseMapper.toResponse(orderModel.getId(), orderModel.getStatus().toString(), OrderMessages.ORDER_DELIVERED);
     }
 }
