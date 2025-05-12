@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.application.mapper;
+package com.foodquart.microservicefoodcourt.application.mapper.response;
 
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderItemResponseDto;
 import com.foodquart.microservicefoodcourt.domain.model.OrderItemModel;

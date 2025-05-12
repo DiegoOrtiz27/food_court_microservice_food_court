@@ -1,5 +1,6 @@
 package com.foodquart.microservicefoodcourt.application.handler;
 
+import com.foodquart.microservicefoodcourt.application.dto.request.OrderDeliveryRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
@@ -14,4 +15,6 @@ public interface IOrderHandler {
     OrderResponseDto assignOrderToEmployee(Long orderId, Long employeeId);
 
     OrderResponseDto notifyOrderReady(Long orderId, Long employeeId);
+
+    OrderResponseDto markOrderAsDelivered(Long orderId, Long employeeId, OrderDeliveryRequestDto orderDeliveryRequestDto);
 }

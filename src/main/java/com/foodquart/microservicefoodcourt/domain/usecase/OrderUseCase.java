@@ -72,14 +72,16 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public OrderModel assignOrderToEmployee(Long orderId, Long employeeId) {
+        ValidationUtil.validateUpdateFields(orderId, employeeId);
+
         Optional<OrderModel> existingOrder = existingOrder(orderId);
 
         return existingOrder.map(order -> {
+            validationOrder(order.getRestaurantId(), employeeId);
+
             if(!order.getStatus().isNotAssignedStatus()) {
                 throw new DomainException(OrderMessages.ORDER_ALREADY_ASSIGNED);
             }
-
-            validationOrder(order.getRestaurantId(), employeeId);
 
             order.setStatus(OrderStatus.IN_PREPARATION);
             order.setAssignedEmployeeId(employeeId);
@@ -89,6 +91,8 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public OrderModel notifyOrderReady(Long orderId, Long employeeId) {
+        ValidationUtil.validateUpdateFields(orderId, employeeId);
+
         Optional<OrderModel> existingOrder = existingOrder(orderId);
 
         return existingOrder.map(order -> {
@@ -118,12 +122,34 @@ public class OrderUseCase implements IOrderServicePort {
         }).orElse(null);
     }
 
+    @Override
+    public OrderModel markOrderAsDelivered(Long orderId, Long employeeId, String securityPin) {
+        ValidationUtil.validateDeliveryFields(orderId, employeeId, securityPin);
+
+        Optional<OrderModel> existingOrder = existingOrder(orderId);
+
+        return existingOrder.map(order -> {
+            if (!order.getStatus().equals(OrderStatus.READY)) {
+                throw new DomainException(OrderMessages.ORDER_NOT_READY_FOR_DELIVERY);
+            }
+
+            validationOrder(order.getRestaurantId(), employeeId);
+            ValidationUtil.validateSecurityPin(securityPin, order.getSecurityPin());
+
+            order.setStatus(OrderStatus.DELIVERED);
+            order.setUpdatedAt(LocalDateTime.now());
+
+            return orderPersistencePort.updateOrder(order);
+        }).orElse(null);
+    }
+
     public Optional<OrderModel> existingOrder(Long orderId) {
         Optional<OrderModel> existingOrder = orderPersistencePort.findById(orderId);
 
         if(existingOrder.isEmpty()) {
             throw new DomainException(String.format(OrderMessages.ORDER_NOT_FOUND, orderId));
         }
+
         return existingOrder;
     }
 

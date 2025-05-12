@@ -1,4 +1,4 @@
-package com.foodquart.microservicefoodcourt.application.mapper;
+package com.foodquart.microservicefoodcourt.application.mapper.request;
 
 import com.foodquart.microservicefoodcourt.application.dto.request.DishRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.request.EnableDishRequestDto;

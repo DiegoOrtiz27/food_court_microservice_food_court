@@ -6,8 +6,8 @@ import com.foodquart.microservicefoodcourt.application.dto.request.UpdateDishReq
 import com.foodquart.microservicefoodcourt.application.dto.response.DishListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
-import com.foodquart.microservicefoodcourt.application.mapper.IDishRequestMapper;
-import com.foodquart.microservicefoodcourt.application.mapper.IDishResponseMapper;
+import com.foodquart.microservicefoodcourt.application.mapper.request.IDishRequestMapper;
+import com.foodquart.microservicefoodcourt.application.mapper.response.IDishResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
