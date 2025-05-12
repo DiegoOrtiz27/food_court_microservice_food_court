@@ -1,5 +1,6 @@
 package com.foodquart.microservicefoodcourt.infrastructure.configuration;
 
+import com.foodquart.microservicefoodcourt.domain.util.SecurityMessages;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -43,9 +44,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/dishes/restaurant/*").hasRole(CUSTOMER)
                         .requestMatchers(HttpMethod.POST, "/api/v1/orders/").hasRole(CUSTOMER)
                         .requestMatchers(HttpMethod.GET, "/api/v1/orders/restaurant/*").hasRole(EMPLOYEE)
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/cancel/**").hasRole(CUSTOMER)
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/**").hasRole(EMPLOYEE)
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/notifyOrderReady/**").hasRole(EMPLOYEE)
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/orders/deliverOrder/**").hasRole(EMPLOYEE)
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -62,12 +65,12 @@ public class SecurityConfig {
         return (request, response, authException) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("""
+            response.getWriter().write(String.format("""
                 {
                     "code": "UNAUTHORIZED",
-                    "message": "Missing or invalid Authorization header"
+                    "message": "%s"
                 }
-            """);
+            """, SecurityMessages.MISSING_AUTH_HEADER));
         };
     }
 
@@ -76,12 +79,12 @@ public class SecurityConfig {
         return (request, response, accessDeniedException) -> {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
-            response.getWriter().write("""
+            response.getWriter().write(String.format("""
                 {
                     "code": "FORBIDDEN",
-                    "message": "You do not have permission to access this resource"
+                    "message": "%s"
                 }
-            """);
+            """, SecurityMessages.ACCESS_DENIED));
         };
     }
 }

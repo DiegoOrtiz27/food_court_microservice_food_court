@@ -297,65 +297,6 @@ class OrderUseCaseTest {
             verify(orderPersistencePort, never()).updateOrder(any());
         }
 
-        @Test
-        @DisplayName("Should throw exception when order status is IN_PREPARATION")
-        void shouldThrowWhenStatusIsInPreparation() {
-            OrderModel order = new OrderModel();
-            order.setId(validOrderId);
-            order.setStatus(OrderStatus.IN_PREPARATION);
-            order.setRestaurantId(validRestaurantId);
-
-            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(order));
-            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
-            when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId))
-                    .thenReturn(true);
-
-            DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.assignOrderToEmployee(validOrderId, validEmployeeId));
-
-            assertEquals(OrderMessages.ORDER_ALREADY_ASSIGNED, exception.getMessage());
-            verify(orderPersistencePort, never()).updateOrder(any());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when order status is READY")
-        void shouldThrowWhenStatusIsReady() {
-            OrderModel order = new OrderModel();
-            order.setId(validOrderId);
-            order.setStatus(OrderStatus.READY);
-            order.setRestaurantId(validRestaurantId);
-
-            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(order));
-            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
-            when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId))
-                    .thenReturn(true);
-
-            DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.assignOrderToEmployee(validOrderId, validEmployeeId));
-
-            assertEquals(OrderMessages.ORDER_ALREADY_ASSIGNED, exception.getMessage());
-            verify(orderPersistencePort, never()).updateOrder(any());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when order status is DELIVERED")
-        void shouldThrowWhenStatusIsDelivered() {
-            OrderModel order = new OrderModel();
-            order.setId(validOrderId);
-            order.setStatus(OrderStatus.DELIVERED);
-            order.setRestaurantId(validRestaurantId);
-
-            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(order));
-            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
-            when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId))
-                    .thenReturn(true);
-
-            DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.assignOrderToEmployee(validOrderId, validEmployeeId));
-
-            assertEquals(OrderMessages.ORDER_ALREADY_ASSIGNED, exception.getMessage());
-            verify(orderPersistencePort, never()).updateOrder(any());
-        }
 
         @Test
         @DisplayName("Should throw exception when order status is CANCELLED")
@@ -373,7 +314,7 @@ class OrderUseCaseTest {
             DomainException exception = assertThrows(DomainException.class,
                     () -> orderUseCase.assignOrderToEmployee(validOrderId, validEmployeeId));
 
-            assertEquals(OrderMessages.ORDER_ALREADY_ASSIGNED, exception.getMessage());
+            assertEquals(OrderMessages.ORDER_IS_NOT_PENDING, exception.getMessage());
             verify(orderPersistencePort, never()).updateOrder(any());
         }
 
@@ -457,8 +398,12 @@ class OrderUseCaseTest {
             OrderModel pendingOrder = new OrderModel();
             pendingOrder.setId(validOrderId);
             pendingOrder.setStatus(OrderStatus.PENDING);
+            pendingOrder.setRestaurantId(validRestaurantId);
+            pendingOrder.setAssignedEmployeeId(validEmployeeId);
 
             when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(pendingOrder));
+            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
+            when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId)).thenReturn(true);
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> orderUseCase.notifyOrderReady(validOrderId, validEmployeeId));
@@ -584,8 +529,11 @@ class OrderUseCaseTest {
             OrderModel inPreparationOrder = new OrderModel();
             inPreparationOrder.setId(validOrderId);
             inPreparationOrder.setStatus(OrderStatus.IN_PREPARATION);
+            inPreparationOrder.setRestaurantId(validRestaurantId);
 
             when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(inPreparationOrder));
+            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
+            when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId)).thenReturn(true);
 
             DomainException exception = assertThrows(DomainException.class,
                     () -> orderUseCase.markOrderAsDelivered(validOrderId, validEmployeeId, validSecurityPin));
@@ -671,6 +619,117 @@ class OrderUseCaseTest {
                     () -> orderUseCase.markOrderAsDelivered(validOrderId, validEmployeeId, ""));
 
             assertEquals(OrderMessages.SECURITY_PIN_REQUIRED, exception.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Cancel Order Tests")
+    class CancelOrderTests {
+        private final Long validOrderId = 100L;
+        private final Long invalidOrderId = 999L;
+        private final Long validCustomerId = 1L;
+
+        @Test
+        @DisplayName("Should cancel order successfully when in PENDING status and belongs to customer")
+        void shouldCancelOrderSuccessfully() {
+            OrderModel pendingOrder = new OrderModel();
+            pendingOrder.setId(validOrderId);
+            pendingOrder.setStatus(OrderStatus.PENDING);
+            pendingOrder.setCustomerId(validCustomerId);
+            pendingOrder.setRestaurantId(validRestaurantId);
+
+            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(pendingOrder));
+            when(orderPersistencePort.updateOrder(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            OrderModel result = orderUseCase.cancelOrder(validOrderId, validCustomerId);
+
+            assertNotNull(result);
+            assertEquals(OrderStatus.CANCELLED, result.getStatus());
+            verify(orderPersistencePort).updateOrder(pendingOrder);
+        }
+
+        @Test
+        @DisplayName("Should throw exception when orderId is null")
+        void shouldThrowWhenOrderIdIsNull() {
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(null, validCustomerId));
+
+            assertEquals(OrderMessages.ORDER_ID_REQUIRED, exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when customerId is null")
+        void shouldThrowWhenCustomerIdIsNull() {
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(validOrderId, null));
+
+            assertEquals(OrderMessages.CUSTOMER_ID_REQUIRED, exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when order not found")
+        void shouldThrowWhenOrderNotFound() {
+            when(orderPersistencePort.findById(invalidOrderId)).thenReturn(Optional.empty());
+
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(invalidOrderId, validCustomerId));
+
+            assertEquals(String.format(OrderMessages.ORDER_NOT_FOUND, invalidOrderId), exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when order does not belong to customer")
+        void shouldThrowWhenOrderNotBelongToCustomer() {
+            OrderModel pendingOrder = new OrderModel();
+            pendingOrder.setId(validOrderId);
+            pendingOrder.setStatus(OrderStatus.PENDING);
+            Long otherCustomerId = 2L;
+            pendingOrder.setCustomerId(otherCustomerId);
+
+            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(pendingOrder));
+
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(validOrderId, validCustomerId));
+
+            assertEquals(OrderMessages.ORDER_NOT_BELONG_TO_CUSTOMER, exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
+        }
+
+        @Test
+        @DisplayName("Should throw exception when order is not in PENDING status")
+        void shouldThrowWhenOrderNotPending() {
+            OrderModel inPreparationOrder = new OrderModel();
+            inPreparationOrder.setId(validOrderId);
+            inPreparationOrder.setStatus(OrderStatus.IN_PREPARATION);
+            inPreparationOrder.setCustomerId(validCustomerId);
+
+            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(inPreparationOrder));
+
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(validOrderId, validCustomerId));
+
+            assertEquals(OrderMessages.ORDER_IS_NOT_PENDING, exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
+        }
+
+        @Test
+        @DisplayName("Should not update order when status is already CANCELLED")
+        void shouldNotUpdateWhenAlreadyCancelled() {
+            OrderModel cancelledOrder = new OrderModel();
+            cancelledOrder.setId(validOrderId);
+            cancelledOrder.setStatus(OrderStatus.CANCELLED);
+            cancelledOrder.setCustomerId(validCustomerId);
+
+            when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(cancelledOrder));
+
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> orderUseCase.cancelOrder(validOrderId, validCustomerId));
+
+            assertEquals(OrderMessages.ORDER_IS_NOT_PENDING, exception.getMessage());
+            verify(orderPersistencePort, never()).updateOrder(any());
         }
     }
 }

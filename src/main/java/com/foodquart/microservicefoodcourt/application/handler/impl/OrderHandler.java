@@ -55,4 +55,10 @@ public class OrderHandler implements IOrderHandler {
         OrderModel orderModel = orderServicePort.markOrderAsDelivered(orderId, employeeId, orderDeliveryRequestDto.getSecurityPin());
         return orderResponseMapper.toResponse(orderModel.getId(), orderModel.getStatus().toString(), OrderMessages.ORDER_DELIVERED);
     }
+
+    @Override
+    public OrderResponseDto cancelOrder(Long orderId, Long customerId) {
+        OrderModel orderModel = orderServicePort.cancelOrder(orderId, customerId);
+        return orderResponseMapper.toResponse(orderModel.getId(), orderModel.getStatus().toString(), OrderMessages.ORDER_CANCELLED);
+    }
 }

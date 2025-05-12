@@ -61,7 +61,7 @@ public class OrderRestController {
     @ApiResponse(responseCode = "204", description = "Order notified successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input data")
     @ApiResponse(responseCode = "403", description = "Not authorized")
-    @PatchMapping("notifyOrderReady/{id}")
+    @PatchMapping("/notifyOrderReady/{id}")
     public ResponseEntity<OrderResponseDto> notifyOrderReady(
             @PathVariable("id") Long orderId) {
         Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
@@ -72,11 +72,23 @@ public class OrderRestController {
     @ApiResponse(responseCode = "200", description = "Order marked as delivered successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input data or invalid order status")
     @ApiResponse(responseCode = "403", description = "Not authorized or invalid security pin")
-    @PatchMapping("deliverOrder/{id}")
+    @PatchMapping("/deliverOrder/{id}")
     public ResponseEntity<OrderResponseDto> markOrderAsDelivered(
             @PathVariable("id") Long orderId,
             @Valid @RequestBody OrderDeliveryRequestDto deliveryRequest) {
         Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
         return ResponseEntity.ok(orderHandler.markOrderAsDelivered(orderId, employeeId, deliveryRequest));
+    }
+
+    @Operation(summary = "Cancel order by customer")
+    @ApiResponse(responseCode = "200", description = "Order cancelled successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid order status for cancellation")
+    @ApiResponse(responseCode = "403", description = "Not authorized")
+    @ApiResponse(responseCode = "404", description = "Order not found")
+    @PatchMapping("/cancel/{id}")
+    public ResponseEntity<OrderResponseDto> cancelOrder(
+            @PathVariable("id") Long orderId) {
+        Long customerId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
+        return ResponseEntity.ok(orderHandler.cancelOrder(orderId, customerId));
     }
 }
