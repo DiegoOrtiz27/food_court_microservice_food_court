@@ -11,10 +11,6 @@ public interface IDishPersistencePort {
 
     Optional<DishModel> findById(Long id);
 
-    DishModel updateDish(DishModel dishModel);
-
-    DishModel updateDishStatus(DishModel dishModel);
-
     Page<DishModel> findByRestaurantIdAndCategory(Long restaurantId, String category, int page, int size);
 
 }

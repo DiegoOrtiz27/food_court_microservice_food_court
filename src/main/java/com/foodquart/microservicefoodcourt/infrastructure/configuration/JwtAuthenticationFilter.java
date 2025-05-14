@@ -1,7 +1,6 @@
 package com.foodquart.microservicefoodcourt.infrastructure.configuration;
 
 import com.foodquart.microservicefoodcourt.domain.spi.IJwtProviderPort;
-import com.foodquart.microservicefoodcourt.domain.util.SecurityMessages;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +18,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+import static com.foodquart.microservicefoodcourt.domain.util.SecurityMessages.*;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -27,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return SecurityMessages.PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
@@ -35,12 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (token == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, SecurityMessages.MISSING_AUTH_HEADER);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, MISSING_AUTH_HEADER);
             return;
         }
 
         if (!jwtProviderPort.validateToken(token)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, SecurityMessages.INVALID_EXPIRED_TOKEN);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, INVALID_EXPIRED_TOKEN);
             return;
         }
 

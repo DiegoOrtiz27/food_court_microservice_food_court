@@ -10,11 +10,12 @@ import com.foodquart.microservicefoodcourt.application.mapper.request.IDishReque
 import com.foodquart.microservicefoodcourt.application.mapper.response.IDishResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
-import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,27 +27,27 @@ public class DishHandler implements IDishHandler {
     private final IDishResponseMapper dishResponseMapper;
 
     @Override
-    public DishResponseDto createDish(DishRequestDto dishRequestDto, Long ownerId) {
+    public DishResponseDto createDish(DishRequestDto dishRequestDto) {
         DishModel dishModel = dishRequestMapper.toDish(dishRequestDto);
-        dishModel = dishServicePort.createDish(dishModel, ownerId);
-        return dishResponseMapper.toResponse(dishModel.getId(), DishMessages.DISH_CREATED);
+        dishModel = dishServicePort.createDish(dishModel);
+        return dishResponseMapper.toResponse(dishModel.getId(), DISH_CREATED);
     }
 
     @Override
-    public DishResponseDto updateDish(UpdateDishRequestDto updateDishRequestDto, Long ownerId) {
+    public DishResponseDto updateDish(Long dishId, UpdateDishRequestDto updateDishRequestDto) {
         DishModel dishModel = dishRequestMapper.toDish(updateDishRequestDto);
-        dishServicePort.updateDish(dishModel, ownerId);
-        return dishResponseMapper.toResponse(dishModel.getId(), DishMessages.DISH_UPDATED);
+        dishServicePort.updateDish(dishId, dishModel);
+        return dishResponseMapper.toResponse(dishId, DISH_UPDATED);
     }
 
     @Override
-    public DishResponseDto enableOrDisableDish(EnableDishRequestDto enableDishRequestDto, Long ownerId) {
+    public DishResponseDto enableOrDisableDish(Long dishId, EnableDishRequestDto enableDishRequestDto) {
         DishModel dishModel = dishRequestMapper.toDish(enableDishRequestDto);
-        dishServicePort.enableOrDisableDish(dishModel, ownerId);
+        dishServicePort.enableOrDisableDish(dishId, dishModel);
         String response = Boolean.TRUE.equals(enableDishRequestDto.getActive())
-                ? DishMessages.DISH_ENABLED
-                : DishMessages.DISH_DISABLED;
-        return dishResponseMapper.toResponse(dishModel.getId(), response);
+                ? DISH_ENABLED
+                : DISH_DISABLED;
+        return dishResponseMapper.toResponse(dishId, response);
     }
 
     @Override

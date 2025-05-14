@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,22 +27,19 @@ public class OrderRestController {
     @PostMapping("/")
     public ResponseEntity<OrderResponseDto> createOrder(
             @Valid @RequestBody OrderRequestDto orderRequestDto) {
-        Long customerId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.createOrder(orderRequestDto, customerId));
+        return ResponseEntity.ok(orderHandler.createOrder(orderRequestDto));
     }
 
     @Operation(summary = "Get orders by restaurant with pagination and status filter")
     @ApiResponse(responseCode = "200", description = "Order retrieved successfully")
     @ApiResponse(responseCode = "404", description = "Restaurant not found")
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<Page<OrderListResponseDto>> getDishesByRestaurant(
+    public ResponseEntity<Page<OrderListResponseDto>> getOrdersByRestaurant(
             @PathVariable Long restaurantId,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.getOrdersByRestaurant(employeeId, restaurantId, status, page, size));
+        return ResponseEntity.ok(orderHandler.getOrdersByRestaurant(restaurantId, status, page, size));
     }
 
     @Operation(summary = "Assign order to employee")
@@ -53,8 +49,7 @@ public class OrderRestController {
     @PatchMapping("/{id}")
     public ResponseEntity<OrderResponseDto> assignOrderToEmployee(
             @PathVariable("id") Long orderId) {
-        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.assignOrderToEmployee(orderId, employeeId));
+        return ResponseEntity.ok(orderHandler.assignOrderToEmployee(orderId));
     }
 
     @Operation(summary = "Notify order ready")
@@ -64,8 +59,7 @@ public class OrderRestController {
     @PatchMapping("/notifyOrderReady/{id}")
     public ResponseEntity<OrderResponseDto> notifyOrderReady(
             @PathVariable("id") Long orderId) {
-        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.notifyOrderReady(orderId, employeeId));
+        return ResponseEntity.ok(orderHandler.notifyOrderReady(orderId));
     }
 
     @Operation(summary = "Mark order as delivered")
@@ -76,8 +70,7 @@ public class OrderRestController {
     public ResponseEntity<OrderResponseDto> markOrderAsDelivered(
             @PathVariable("id") Long orderId,
             @Valid @RequestBody OrderDeliveryRequestDto deliveryRequest) {
-        Long employeeId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.markOrderAsDelivered(orderId, employeeId, deliveryRequest));
+        return ResponseEntity.ok(orderHandler.markOrderAsDelivered(orderId, deliveryRequest));
     }
 
     @Operation(summary = "Cancel order by customer")
@@ -88,7 +81,6 @@ public class OrderRestController {
     @PatchMapping("/cancel/{id}")
     public ResponseEntity<OrderResponseDto> cancelOrder(
             @PathVariable("id") Long orderId) {
-        Long customerId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(orderHandler.cancelOrder(orderId, customerId));
+        return ResponseEntity.ok(orderHandler.cancelOrder(orderId));
     }
 }

@@ -2,12 +2,11 @@ package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantEmployeeModel;
-import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantEmployeePersistencePort;
-import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
-import com.foodquart.microservicefoodcourt.domain.spi.IUserClientPort;
+import com.foodquart.microservicefoodcourt.domain.spi.*;
 import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,12 +28,15 @@ class RestaurantEmployeeUseCaseTest {
     @Mock
     private IUserClientPort userClientPort;
 
+    @Mock
+    private ISecurityContextPort securityContextPort;
+
     @InjectMocks
     private RestaurantEmployeeUseCase restaurantEmployeeUseCase;
 
     private RestaurantEmployeeModel validEmployee;
-    private final Long validOwnerId = 1L;
-    private final Long validRestaurantId = 5L;
+    private final Long ownerId = 1L;
+    private final Long restaurantId = 5L;
 
     @BeforeEach
     void setup() {
@@ -46,91 +48,110 @@ class RestaurantEmployeeUseCaseTest {
         validEmployee.setPhone("+573001234567");
         validEmployee.setEmail("juan.perez@example.com");
         validEmployee.setPassword("securePassword123");
-        validEmployee.setRestaurantId(validRestaurantId);
     }
 
+    @Nested
+    @DisplayName("Add Employee to Restaurant")
+    class AddEmployeeToRestaurant {
 
-    @Test
-    @DisplayName("Should throw InvalidOwnerException when user is not the owner")
-    void shouldThrowInvalidOwnerExceptionWhenUserIsNotOwner() {
-        when(restaurantPersistencePort.isOwnerOfRestaurant(validOwnerId, validRestaurantId))
-                .thenReturn(false);
+        @Test
+        @DisplayName("Should throw exception when restaurant does not exist")
+        void shouldThrowExceptionWhenRestaurantNotFound() {
+            when(securityContextPort.getCurrentUserId()).thenReturn(ownerId);
+            when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(false);
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> restaurantEmployeeUseCase.addEmployeeToRestaurant(validOwnerId, validEmployee));
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> restaurantEmployeeUseCase.addEmployeeToRestaurant(restaurantId, validEmployee));
 
-        assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, validRestaurantId), exception.getMessage());
-        verify(restaurantPersistencePort).isOwnerOfRestaurant(validOwnerId, validRestaurantId);
-        verifyNoInteractions(userClientPort, employeePersistence);
-    }
+            assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId),
+                    exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(restaurantId);
+            verifyNoMoreInteractions(restaurantPersistencePort);
+            verifyNoInteractions(userClientPort, employeePersistence);
+        }
 
-    @Test
-    @DisplayName("Should create employee successfully when user is owner")
-    void shouldCreateEmployeeSuccessfullyWhenUserIsOwner() {
-        RestaurantEmployeeModel createdEmployee = new RestaurantEmployeeModel();
-        createdEmployee.setEmployeeId(10L);
-        createdEmployee.setFirstName("Juan");
-        createdEmployee.setLastName("Pérez");
-        createdEmployee.setRestaurantId(validRestaurantId);
+        @Test
+        @DisplayName("Should throw exception when user is not the owner")
+        void shouldThrowInvalidOwnerExceptionWhenUserIsNotOwner() {
+            when(securityContextPort.getCurrentUserId()).thenReturn(ownerId);
+            when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)).thenReturn(false);
 
-        when(restaurantPersistencePort.isOwnerOfRestaurant(validOwnerId, validRestaurantId))
-                .thenReturn(true);
-        when(userClientPort.createEmployee(validEmployee)).thenReturn(createdEmployee);
-        when(employeePersistence.addEmployeeToRestaurant(createdEmployee)).thenReturn(createdEmployee);
+            DomainException exception = assertThrows(DomainException.class,
+                    () -> restaurantEmployeeUseCase.addEmployeeToRestaurant(restaurantId, validEmployee));
 
-        RestaurantEmployeeModel result = restaurantEmployeeUseCase.addEmployeeToRestaurant(validOwnerId, validEmployee);
+            assertEquals(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, restaurantId),
+                    exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(restaurantId);
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, restaurantId);
+            verifyNoInteractions(userClientPort, employeePersistence);
+        }
 
-        assertNotNull(result);
-        assertEquals(10L, result.getEmployeeId());
-        assertEquals("Juan", result.getFirstName());
-        assertEquals("Pérez", result.getLastName());
-        assertEquals(validRestaurantId, result.getRestaurantId());
+        @Test
+        @DisplayName("Should create employee successfully when valid data")
+        void shouldCreateEmployeeSuccessfullyWhenValidData() {
+            RestaurantEmployeeModel createdEmployee = new RestaurantEmployeeModel();
+            createdEmployee.setEmployeeId(10L);
+            createdEmployee.setFirstName("Juan");
+            createdEmployee.setLastName("Pérez");
+            createdEmployee.setRestaurantId(restaurantId);
 
-        verify(restaurantPersistencePort).isOwnerOfRestaurant(validOwnerId, validRestaurantId);
-        verify(userClientPort).createEmployee(validEmployee);
-        verify(employeePersistence).addEmployeeToRestaurant(createdEmployee);
-    }
+            when(securityContextPort.getCurrentUserId()).thenReturn(ownerId);
+            when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)).thenReturn(true);
+            when(userClientPort.createEmployee(any(RestaurantEmployeeModel.class))).thenReturn(createdEmployee);
+            when(employeePersistence.addEmployeeToRestaurant(createdEmployee)).thenReturn(createdEmployee);
 
-    @Test
-    @DisplayName("Should pass complete employee data to user client")
-    void shouldPassCompleteEmployeeDataToUserClient() {
-        when(restaurantPersistencePort.isOwnerOfRestaurant(validOwnerId, validRestaurantId))
-                .thenReturn(true);
-        when(userClientPort.createEmployee(validEmployee)).thenReturn(validEmployee);
-        when(employeePersistence.addEmployeeToRestaurant(validEmployee)).thenReturn(validEmployee);
+            RestaurantEmployeeModel result = restaurantEmployeeUseCase.addEmployeeToRestaurant(restaurantId, validEmployee);
 
-        restaurantEmployeeUseCase.addEmployeeToRestaurant(validOwnerId, validEmployee);
+            assertNotNull(result);
+            assertEquals(10L, result.getEmployeeId());
+            assertEquals(restaurantId, result.getRestaurantId());
 
-        verify(userClientPort).createEmployee(argThat(employee ->
-                employee.getFirstName().equals("Juan") &&
-                        employee.getLastName().equals("Pérez") &&
-                        employee.getDocumentId().equals("1234567890") &&
-                        employee.getPhone().equals("+573001234567") &&
-                        employee.getEmail().equals("juan.perez@example.com") &&
-                        employee.getPassword().equals("securePassword123") &&
-                        employee.getRestaurantId().equals(validRestaurantId)
-        ));
-    }
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(restaurantId);
+            verify(restaurantPersistencePort).isOwnerOfRestaurant(ownerId, restaurantId);
+            verify(userClientPort).createEmployee(argThat(emp ->
+                    emp.getRestaurantId().equals(restaurantId)
+            ));
+            verify(employeePersistence).addEmployeeToRestaurant(createdEmployee);
+        }
 
-    @Test
-    @DisplayName("Should return the employee with all fields populated")
-    void shouldReturnEmployeeWithAllFieldsPopulated() {
-        when(restaurantPersistencePort.isOwnerOfRestaurant(validOwnerId, validRestaurantId))
-                .thenReturn(true);
-        when(userClientPort.createEmployee(validEmployee)).thenReturn(validEmployee);
-        when(employeePersistence.addEmployeeToRestaurant(validEmployee)).thenReturn(validEmployee);
+        @Test
+        @DisplayName("Should set restaurant ID before creating employee")
+        void shouldSetRestaurantIdBeforeCreatingEmployee() {
+            when(securityContextPort.getCurrentUserId()).thenReturn(ownerId);
+            when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)).thenReturn(true);
+            when(userClientPort.createEmployee(any(RestaurantEmployeeModel.class))).thenReturn(validEmployee);
+            when(employeePersistence.addEmployeeToRestaurant(validEmployee)).thenReturn(validEmployee);
 
-        RestaurantEmployeeModel result = restaurantEmployeeUseCase.addEmployeeToRestaurant(validOwnerId, validEmployee);
+            restaurantEmployeeUseCase.addEmployeeToRestaurant(restaurantId, validEmployee);
 
-        assertAll(
-                () -> assertEquals(10L, result.getEmployeeId()),
-                () -> assertEquals("Juan", result.getFirstName()),
-                () -> assertEquals("Pérez", result.getLastName()),
-                () -> assertEquals("1234567890", result.getDocumentId()),
-                () -> assertEquals("+573001234567", result.getPhone()),
-                () -> assertEquals("juan.perez@example.com", result.getEmail()),
-                () -> assertEquals("securePassword123", result.getPassword()),
-                () -> assertEquals(validRestaurantId, result.getRestaurantId())
-        );
+            verify(userClientPort).createEmployee(argThat(employee ->
+                    employee.getRestaurantId().equals(restaurantId)
+            ));
+        }
+
+        @Test
+        @DisplayName("Should pass complete employee data to persistence")
+        void shouldPassCompleteEmployeeDataToPersistence() {
+            when(securityContextPort.getCurrentUserId()).thenReturn(ownerId);
+            when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(true);
+            when(restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)).thenReturn(true);
+            when(userClientPort.createEmployee(any(RestaurantEmployeeModel.class))).thenReturn(validEmployee);
+            when(employeePersistence.addEmployeeToRestaurant(validEmployee)).thenReturn(validEmployee);
+
+           restaurantEmployeeUseCase.addEmployeeToRestaurant(restaurantId, validEmployee);
+
+            verify(employeePersistence).addEmployeeToRestaurant(argThat(emp ->
+                    emp.getEmployeeId().equals(10L) &&
+                            emp.getFirstName().equals("Juan") &&
+                            emp.getLastName().equals("Pérez") &&
+                            emp.getRestaurantId().equals(restaurantId)
+            ));
+        }
     }
 }

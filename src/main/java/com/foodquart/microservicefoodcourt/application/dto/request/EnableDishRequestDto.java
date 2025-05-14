@@ -7,9 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class EnableDishRequestDto {
-
-    private Long id;
-
     @NotNull(message = "Active status is required")
     private Boolean active;
 }

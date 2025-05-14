@@ -4,5 +4,5 @@ import com.foodquart.microservicefoodcourt.application.dto.request.CreateRestaur
 import com.foodquart.microservicefoodcourt.application.dto.response.CreateRestaurantEmployeeResponseDto;
 
 public interface IRestaurantEmployeeHandler {
-    CreateRestaurantEmployeeResponseDto addEmployeeToRestaurant(Long ownerId, CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto);
+    CreateRestaurantEmployeeResponseDto addEmployeeToRestaurant(Long restaurantId, CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto);
 }

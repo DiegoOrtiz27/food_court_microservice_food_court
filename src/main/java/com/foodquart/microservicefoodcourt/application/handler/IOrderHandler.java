@@ -8,16 +8,16 @@ import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
 import org.springframework.data.domain.Page;
 
 public interface IOrderHandler {
-    OrderResponseDto createOrder(OrderRequestDto orderRequestDto, Long customerId);
+    OrderResponseDto createOrder(OrderRequestDto orderRequestDto);
 
-    Page<OrderListResponseDto> getOrdersByRestaurant(Long employeeId, Long restaurantId, OrderStatus status, int page, int size);
+    Page<OrderListResponseDto> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
 
-    OrderResponseDto assignOrderToEmployee(Long orderId, Long employeeId);
+    OrderResponseDto assignOrderToEmployee(Long orderId);
 
-    OrderResponseDto notifyOrderReady(Long orderId, Long employeeId);
+    OrderResponseDto notifyOrderReady(Long orderId);
 
-    OrderResponseDto markOrderAsDelivered(Long orderId, Long employeeId, OrderDeliveryRequestDto orderDeliveryRequestDto);
+    OrderResponseDto markOrderAsDelivered(Long orderId, OrderDeliveryRequestDto orderDeliveryRequestDto);
 
-    OrderResponseDto cancelOrder(Long orderId, Long customerId);
+    OrderResponseDto cancelOrder(Long orderId);
 
 }

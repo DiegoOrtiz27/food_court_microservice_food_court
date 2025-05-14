@@ -3,6 +3,7 @@ package com.foodquart.microservicefoodcourt.domain.usecase;
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,10 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -120,35 +120,37 @@ class RestaurantUseCaseTest {
     @Nested
     @DisplayName("getAllRestaurants Tests")
     class GetAllRestaurantsTests {
+
         @Test
-        @DisplayName("Should return empty page when no restaurants exist")
-        void getAllRestaurantsWhenNoRestaurantsShouldReturnEmptyPage() {
+        @DisplayName("Should return empty pagination when no restaurants exist")
+        void getAllRestaurantsWhenNoRestaurantsShouldReturnEmptyPagination() {
             int page = 0;
             int size = 10;
-            Page<RestaurantModel> emptyPage = Page.empty();
-            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(emptyPage);
+            Pagination<RestaurantModel> emptyPagination = new Pagination<>(Collections.emptyList(), page, size, 0);
+            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(emptyPagination);
 
-            Page<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
+            Pagination<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
 
-            assertTrue(result.isEmpty());
+            assertTrue(result.getItems().isEmpty());
+            assertEquals(0, result.getTotalItems());
             verify(restaurantPersistencePort).getAllRestaurants(page, size);
         }
 
         @Test
         @DisplayName("Should return paginated restaurants when they exist")
-        void getAllRestaurantsWhenRestaurantsExistShouldReturnPage() {
+        void getAllRestaurantsWhenRestaurantsExistShouldReturnPagination() {
             int page = 0;
             int size = 10;
             RestaurantModel restaurant = new RestaurantModel();
             restaurant.setName("Test Restaurant");
-            Page<RestaurantModel> mockPage = new PageImpl<>(Collections.singletonList(restaurant));
-            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(mockPage);
+            Pagination<RestaurantModel> mockPagination = new Pagination<>(List.of(restaurant), page, size, 1);
+            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(mockPagination);
 
-            Page<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
+            Pagination<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
 
-            assertFalse(result.isEmpty());
-            assertEquals(1, result.getContent().size());
-            assertEquals("Test Restaurant", result.getContent().getFirst().getName());
+            assertFalse(result.getItems().isEmpty());
+            assertEquals(1, result.getItems().size());
+            assertEquals("Test Restaurant", result.getItems().getFirst().getName());
             verify(restaurantPersistencePort).getAllRestaurants(page, size);
         }
 
@@ -157,13 +159,21 @@ class RestaurantUseCaseTest {
         void getAllRestaurantsShouldPassCorrectPaginationParameters() {
             int page = 2;
             int size = 5;
-            Page<RestaurantModel> mockPage = Page.empty();
-            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(mockPage);
+            Pagination<RestaurantModel> mockPagination = new Pagination<>(Collections.emptyList(), page, size, 0);
+            when(restaurantPersistencePort.getAllRestaurants(page, size)).thenReturn(mockPagination);
 
-            Page<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
+            Pagination<RestaurantModel> result = restaurantUseCase.getAllRestaurants(page, size);
 
             assertNotNull(result);
             verify(restaurantPersistencePort).getAllRestaurants(page, size);
+        }
+
+        @Test
+        @DisplayName("Should validate pagination parameters")
+        void getAllRestaurantsShouldValidatePaginationParameters() {
+            assertThrows(DomainException.class, () -> restaurantUseCase.getAllRestaurants(-1, 10));
+            assertThrows(DomainException.class, () -> restaurantUseCase.getAllRestaurants(0, 0));
+            assertThrows(DomainException.class, () -> restaurantUseCase.getAllRestaurants(0, -1));
         }
     }
 }

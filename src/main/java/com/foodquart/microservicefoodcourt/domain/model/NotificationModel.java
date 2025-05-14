@@ -11,6 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class NotificationModel {
     private String phoneNumber;
-    private String securityPin;
-    private Long orderId;
+    private String message;
 }

@@ -1,37 +1,32 @@
 package com.foodquart.microservicefoodcourt.domain.usecase;
 
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
-import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
-import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
-import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
+import com.foodquart.microservicefoodcourt.domain.spi.ISecurityContextPort;
 import org.springframework.data.domain.Page;
 
-import java.util.Optional;
+import static com.foodquart.microservicefoodcourt.domain.util.ValidationUtil.*;
 
 public class DishUseCase implements IDishServicePort {
 
     private final IDishPersistencePort dishPersistencePort;
     private final IRestaurantPersistencePort restaurantPersistencePort;
+    private final ISecurityContextPort securityContextPort;
 
-    public DishUseCase(IDishPersistencePort dishPersistencePort,IRestaurantPersistencePort restaurantPersistencePort) {
+    public DishUseCase(IDishPersistencePort dishPersistencePort, IRestaurantPersistencePort restaurantPersistencePort, ISecurityContextPort securityContextPort) {
         this.dishPersistencePort = dishPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
+        this.securityContextPort = securityContextPort;
     }
 
     @Override
-    public DishModel createDish(DishModel dishModel, Long ownerId) {
+    public DishModel createDish(DishModel dishModel) {
+        Long ownerId = securityContextPort.getCurrentUserId();
+
         validateDish(dishModel);
-
-        if (!restaurantPersistencePort.existsById(dishModel.getRestaurantId())) {
-            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, dishModel.getRestaurantId()));
-        }
-
-        if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, dishModel.getRestaurantId())) {
-            throw new DomainException(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, dishModel.getRestaurantId()));
-        }
+        validateRestaurant(dishModel.getRestaurantId(), ownerId);
 
         dishModel.setActive(true);
 
@@ -39,61 +34,38 @@ public class DishUseCase implements IDishServicePort {
     }
 
     @Override
-    public void updateDish(DishModel dishModel, Long ownerId) {
+    public void updateDish(Long dishId, DishModel dishModel) {
+        Long ownerId = securityContextPort.getCurrentUserId();
+
         validateDish(dishModel);
+        DishModel existingDish = validateExistingDish(dishPersistencePort, dishId);
 
-        Optional<DishModel> existingDish = validateExistingDish(dishModel.getId());
-
-        existingDish.ifPresent(dish -> {
-            validateUpdateDish(dish.getRestaurantId(), ownerId);
-            dish.setDescription(dishModel.getDescription());
-            dish.setPrice(dishModel.getPrice());
-            dishPersistencePort.updateDish(dish);
-        });
+        validateRestaurant(existingDish.getRestaurantId(), ownerId);
+        existingDish.setDescription(dishModel.getDescription());
+        existingDish.setPrice(dishModel.getPrice());
+        dishPersistencePort.saveDish(existingDish);
     }
 
     @Override
-    public DishModel enableOrDisableDish(DishModel dishModel, Long ownerId) {
-        Optional<DishModel> existingDish = validateExistingDish(dishModel.getId());
+    public DishModel enableOrDisableDish(Long dishId, DishModel dishModel) {
+        Long ownerId = securityContextPort.getCurrentUserId();
 
-        return existingDish.map(dish -> {
-            validateUpdateDish(dish.getRestaurantId(), ownerId);
+        DishModel existingDish = validateExistingDish(dishPersistencePort, dishId);
+        validateRestaurant(existingDish.getRestaurantId(), ownerId);
 
-            dish.setActive(dishModel.getActive());
-            return dishPersistencePort.updateDishStatus(dish);
-        }).orElse(null);
+        existingDish.setActive(dishModel.getActive());
+        return dishPersistencePort.saveDish(existingDish);
     }
 
     @Override
     public Page<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
-        if (!restaurantPersistencePort.existsById(restaurantId)) {
-            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId));
-        }
+        existsRestaurantById(restaurantPersistencePort, restaurantId);
         return dishPersistencePort.findByRestaurantIdAndCategory(restaurantId, category, page, size);
     }
 
-    private void validateDish(DishModel dish) {
-        if (dish.getPrice() <= 0) {
-            throw new DomainException(DishMessages.PRICE_MUST_BE_POSITIVE);
-        }
-    }
 
-    private Optional<DishModel> validateExistingDish(Long dishId) {
-        Optional<DishModel> existingDish = dishPersistencePort.findById(dishId);
-        if(existingDish.isEmpty()) {
-            throw new DomainException(String.format(DishMessages.DISH_NOT_FOUND, dishId));
-        }
-        return existingDish;
-    }
-
-    private void validateUpdateDish(Long restaurantId, Long ownerId) {
-
-        if (!restaurantPersistencePort.existsById(restaurantId)) {
-            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId));
-        }
-
-        if (!restaurantPersistencePort.isOwnerOfRestaurant(ownerId, restaurantId)) {
-            throw new DomainException(String.format(RestaurantMessages.OWNER_NOT_ASSOCIATED_TO_RESTAURANT, restaurantId));
-        }
+    private void validateRestaurant(Long restaurantId, Long ownerId) {
+        existsRestaurantById(restaurantPersistencePort, restaurantId);
+        isOwnerOfRestaurant(restaurantPersistencePort, restaurantId, ownerId);
     }
 }

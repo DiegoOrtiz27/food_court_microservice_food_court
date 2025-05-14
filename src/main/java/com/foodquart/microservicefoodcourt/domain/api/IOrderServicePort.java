@@ -8,14 +8,14 @@ public interface IOrderServicePort {
 
     OrderModel createOrder(OrderModel orderModel);
 
-    Page<OrderModel> getOrdersByRestaurant(Long employeeId, Long restaurantId, OrderStatus status, int page, int size);
+    Page<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
 
-    OrderModel assignOrderToEmployee(Long orderId, Long employeeId);
+    OrderModel assignOrderToEmployee(Long orderId);
 
-    OrderModel notifyOrderReady(Long orderId, Long employeeId);
+    OrderModel notifyOrderReady(Long orderId);
 
-    OrderModel markOrderAsDelivered(Long orderId, Long employeeId, String securityPin);
+    OrderModel markOrderAsDelivered(Long orderId, String securityPin);
 
-    OrderModel cancelOrder(Long orderId, Long customerId);
+    OrderModel cancelOrder(Long orderId);
 
 }

@@ -6,7 +6,6 @@ import lombok.*;
 @Getter
 @Setter
 public class CreateRestaurantEmployeeRequestDto {
-    private Long restaurantId;
 
     @NotBlank(message = "First name is required")
     private String firstName;

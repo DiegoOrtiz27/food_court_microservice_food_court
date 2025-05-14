@@ -7,8 +7,6 @@ import lombok.*;
 @Setter
 public class UpdateDishRequestDto {
 
-    private Long id;
-
     @NotBlank(message = "Description is required")
     private String description;
 
