@@ -5,7 +5,7 @@ import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.ISecurityContextPort;
-import org.springframework.data.domain.Page;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 
 import static com.foodquart.microservicefoodcourt.domain.util.ValidationUtil.*;
 
@@ -58,7 +58,7 @@ public class DishUseCase implements IDishServicePort {
     }
 
     @Override
-    public Page<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
+    public Pagination<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
         existsRestaurantById(restaurantPersistencePort, restaurantId);
         return dishPersistencePort.findByRestaurantIdAndCategory(restaurantId, category, page, size);
     }

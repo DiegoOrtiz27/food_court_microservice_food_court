@@ -1,7 +1,7 @@
 package com.foodquart.microservicefoodcourt.domain.spi;
 
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
-import org.springframework.data.domain.Page;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 
 import java.util.Optional;
 
@@ -11,6 +11,6 @@ public interface IDishPersistencePort {
 
     Optional<DishModel> findById(Long id);
 
-    Page<DishModel> findByRestaurantIdAndCategory(Long restaurantId, String category, int page, int size);
+    Pagination<DishModel> findByRestaurantIdAndCategory(Long restaurantId, String category, int page, int size);
 
 }

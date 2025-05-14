@@ -2,13 +2,13 @@ package com.foodquart.microservicefoodcourt.domain.api;
 
 import com.foodquart.microservicefoodcourt.domain.model.OrderModel;
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
-import org.springframework.data.domain.Page;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 
 public interface IOrderServicePort {
 
     OrderModel createOrder(OrderModel orderModel);
 
-    Page<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
+    Pagination<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
 
     OrderModel assignOrderToEmployee(Long orderId);
 

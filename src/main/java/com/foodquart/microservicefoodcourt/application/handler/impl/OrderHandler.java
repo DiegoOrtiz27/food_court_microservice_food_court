@@ -4,16 +4,19 @@ import com.foodquart.microservicefoodcourt.application.dto.request.OrderDelivery
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IOrderHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.request.IOrderRequestMapper;
 import com.foodquart.microservicefoodcourt.application.mapper.response.IOrderResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IOrderServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.OrderModel;
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.foodquart.microservicefoodcourt.domain.util.OrderMessages.*;
 
@@ -33,9 +36,22 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
-    public Page<OrderListResponseDto> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size) {
-        Page<OrderModel> orderModel = orderServicePort.getOrdersByRestaurant(restaurantId, status, page, size);
-        return orderModel.map(orderResponseMapper::toResponse);
+    public PaginationListResponseDto<OrderListResponseDto> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size) {
+        Pagination<OrderModel> pagination = orderServicePort.getOrdersByRestaurant(restaurantId, status, page, size);
+
+        List<OrderListResponseDto> items = pagination.getItems().stream()
+                .map(orderResponseMapper::toResponse)
+                .toList();
+
+        return new PaginationListResponseDto<>(
+                items,
+                pagination.getPage(),
+                pagination.getSize(),
+                pagination.getTotalItems(),
+                pagination.getTotalPages(),
+                pagination.isHasNext(),
+                pagination.isHasPrevious()
+        );
     }
 
     @Override

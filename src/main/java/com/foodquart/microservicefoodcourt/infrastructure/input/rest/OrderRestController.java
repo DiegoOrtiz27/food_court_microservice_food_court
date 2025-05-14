@@ -4,13 +4,13 @@ import com.foodquart.microservicefoodcourt.application.dto.request.OrderDelivery
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IOrderHandler;
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,12 +34,20 @@ public class OrderRestController {
     @ApiResponse(responseCode = "200", description = "Order retrieved successfully")
     @ApiResponse(responseCode = "404", description = "Restaurant not found")
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<Page<OrderListResponseDto>> getOrdersByRestaurant(
+    public ResponseEntity<PaginationListResponseDto<OrderListResponseDto>> getOrdersByRestaurant(
             @PathVariable Long restaurantId,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(orderHandler.getOrdersByRestaurant(restaurantId, status, page, size));
+
+        PaginationListResponseDto<OrderListResponseDto> response =
+                orderHandler.getOrdersByRestaurant(restaurantId, status, page, size);
+
+        if (response.getContent().isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Assign order to employee")

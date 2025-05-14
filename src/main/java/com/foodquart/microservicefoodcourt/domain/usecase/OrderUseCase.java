@@ -5,7 +5,6 @@ import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.*;
 import com.foodquart.microservicefoodcourt.domain.spi.*;
 import com.foodquart.microservicefoodcourt.domain.util.*;
-import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -67,7 +66,8 @@ public class OrderUseCase implements IOrderServicePort {
     }
 
     @Override
-    public Page<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size) {
+    public Pagination<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size) {
+        validatePagination(page, size);
         Long employeeId = securityContextPort.getCurrentUserId();
         validateRestaurant(restaurantId, employeeId);
         return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);

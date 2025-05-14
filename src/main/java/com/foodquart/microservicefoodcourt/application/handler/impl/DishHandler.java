@@ -5,15 +5,18 @@ import com.foodquart.microservicefoodcourt.application.dto.request.EnableDishReq
 import com.foodquart.microservicefoodcourt.application.dto.request.UpdateDishRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
 import com.foodquart.microservicefoodcourt.application.mapper.request.IDishRequestMapper;
 import com.foodquart.microservicefoodcourt.application.mapper.response.IDishResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IDishServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.DishModel;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.*;
 
@@ -51,8 +54,21 @@ public class DishHandler implements IDishHandler {
     }
 
     @Override
-    public Page<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
-        Page<DishModel> dishModel = dishServicePort.getDishesByRestaurant(restaurantId, category, page, size);
-        return dishModel.map(dishResponseMapper::toResponse);
+    public PaginationListResponseDto<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size) {
+        Pagination<DishModel> pagination = dishServicePort.getDishesByRestaurant(restaurantId, category, page, size);
+
+        List<DishListResponseDto> items = pagination.getItems().stream()
+                .map(dishResponseMapper::toResponse)
+                .toList();
+
+        return new PaginationListResponseDto<>(
+                items,
+                pagination.getPage(),
+                pagination.getSize(),
+                pagination.getTotalItems(),
+                pagination.getTotalPages(),
+                pagination.isHasNext(),
+                pagination.isHasPrevious()
+        );
     }
 }
