@@ -78,7 +78,8 @@ public class BeanConfiguration {
     public IDishPersistencePort dishPersistencePort() {
         return new DishJpaAdapter(
                 dishRepository,
-                dishEntityMapper);
+                dishEntityMapper,
+                entityManager);
     }
 
     @Bean
@@ -109,7 +110,8 @@ public class BeanConfiguration {
     public IOrderPersistencePort orderPersistencePort() {
         return new OrderJpaAdapter(
                 orderRepository,
-                orderEntityMapper);
+                orderEntityMapper,
+                entityManager);
     }
 
     @Bean

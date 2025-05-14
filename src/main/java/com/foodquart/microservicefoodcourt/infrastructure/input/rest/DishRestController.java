@@ -5,12 +5,12 @@ import com.foodquart.microservicefoodcourt.application.dto.request.EnableDishReq
 import com.foodquart.microservicefoodcourt.application.dto.request.UpdateDishRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 import com.foodquart.microservicefoodcourt.application.handler.IDishHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,11 +56,18 @@ public class DishRestController {
     @ApiResponse(responseCode = "200", description = "Dishes retrieved successfully")
     @ApiResponse(responseCode = "404", description = "Restaurant not found")
     @GetMapping("/restaurant/{restaurantId}")
-    public ResponseEntity<Page<DishListResponseDto>> getDishesByRestaurant(
+    public ResponseEntity<PaginationListResponseDto<DishListResponseDto>> getDishesByRestaurant(
             @PathVariable Long restaurantId,
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(dishHandler.getDishesByRestaurant(restaurantId, category, page, size));
+        PaginationListResponseDto<DishListResponseDto> response =
+                dishHandler.getDishesByRestaurant(restaurantId, category, page, size);
+
+        if (response.getContent().isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 }

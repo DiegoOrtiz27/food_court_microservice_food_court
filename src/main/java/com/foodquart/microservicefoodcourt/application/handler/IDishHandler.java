@@ -5,7 +5,7 @@ import com.foodquart.microservicefoodcourt.application.dto.request.EnableDishReq
 import com.foodquart.microservicefoodcourt.application.dto.request.UpdateDishRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.DishResponseDto;
-import org.springframework.data.domain.Page;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 
 public interface IDishHandler {
     DishResponseDto createDish(DishRequestDto dishRequestDto);
@@ -14,5 +14,5 @@ public interface IDishHandler {
 
     DishResponseDto enableOrDisableDish(Long dishId, EnableDishRequestDto enableDishRequestDto);
 
-    Page<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size);
+    PaginationListResponseDto<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size);
 }

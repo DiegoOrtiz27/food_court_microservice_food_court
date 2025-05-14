@@ -4,13 +4,13 @@ import com.foodquart.microservicefoodcourt.application.dto.request.OrderDelivery
 import com.foodquart.microservicefoodcourt.application.dto.request.OrderRequestDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderListResponseDto;
 import com.foodquart.microservicefoodcourt.application.dto.response.OrderResponseDto;
+import com.foodquart.microservicefoodcourt.application.dto.response.PaginationListResponseDto;
 import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
-import org.springframework.data.domain.Page;
 
 public interface IOrderHandler {
     OrderResponseDto createOrder(OrderRequestDto orderRequestDto);
 
-    Page<OrderListResponseDto> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
+    PaginationListResponseDto<OrderListResponseDto> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size);
 
     OrderResponseDto assignOrderToEmployee(Long orderId);
 
