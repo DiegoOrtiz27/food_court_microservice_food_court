@@ -49,13 +49,6 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
     }
 
     @Override
-    public OrderModel updateOrder(OrderModel order) {
-        OrderEntity orderEntity = orderEntityMapper.toEntity(order);
-        OrderEntity updatedEntity = orderRepository.save(orderEntity);
-        return orderEntityMapper.toOrderModel(updatedEntity);
-    }
-
-    @Override
     public boolean hasAssignedOrder(Long employeeId, Long orderId) {
          return orderRepository.countByEmployeeIdAndOrderId(
                 employeeId,

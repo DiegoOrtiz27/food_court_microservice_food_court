@@ -1,10 +1,9 @@
 package com.foodquart.microservicefoodcourt.domain.api;
 
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantModel;
-import org.springframework.data.domain.Page;
-
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 public interface IRestaurantServicePort {
     RestaurantModel saveRestaurant(RestaurantModel restaurantModel);
 
-    Page<RestaurantModel> getAllRestaurants(int page, int size);
+    Pagination<RestaurantModel> getAllRestaurants(int page, int size);
 }

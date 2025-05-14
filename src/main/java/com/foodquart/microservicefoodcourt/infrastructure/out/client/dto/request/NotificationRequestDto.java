@@ -6,6 +6,5 @@ import lombok.*;
 @Setter
 public class NotificationRequestDto {
     private String phoneNumber;
-    private String securityPin;
-    private Long orderId;
+    private String message;
 }

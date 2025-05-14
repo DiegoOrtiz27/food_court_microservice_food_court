@@ -7,10 +7,11 @@ import com.foodquart.microservicefoodcourt.application.mapper.request.IRestauran
 import com.foodquart.microservicefoodcourt.application.mapper.response.IRestaurantEmployeeResponseMapper;
 import com.foodquart.microservicefoodcourt.domain.api.IRestaurantEmployeeServicePort;
 import com.foodquart.microservicefoodcourt.domain.model.RestaurantEmployeeModel;
-import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import static com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages.EMPLOYEE_CREATED;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +23,9 @@ public class RestaurantEmployeeHandler implements IRestaurantEmployeeHandler {
     private final IRestaurantEmployeeResponseMapper restaurantEmployeeResponseMapper;
 
     @Override
-    public CreateRestaurantEmployeeResponseDto addEmployeeToRestaurant(Long ownerId, CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto) {
+    public CreateRestaurantEmployeeResponseDto addEmployeeToRestaurant(Long restaurantId, CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto) {
         RestaurantEmployeeModel restaurantEmployeeModel = restaurantEmployeeRequestMapper.toRestaurantEmployee(createRestaurantEmployeeRequestDto);
-        restaurantEmployeeModel = restaurantEmployeeServicePort.addEmployeeToRestaurant(ownerId, restaurantEmployeeModel);
-        return restaurantEmployeeResponseMapper.toResponse(restaurantEmployeeModel.getEmployeeId(), RestaurantMessages.EMPLOYEE_CREATED);
+        restaurantEmployeeModel = restaurantEmployeeServicePort.addEmployeeToRestaurant(restaurantId, restaurantEmployeeModel);
+        return restaurantEmployeeResponseMapper.toResponse(restaurantEmployeeModel.getEmployeeId(), EMPLOYEE_CREATED);
     }
 }

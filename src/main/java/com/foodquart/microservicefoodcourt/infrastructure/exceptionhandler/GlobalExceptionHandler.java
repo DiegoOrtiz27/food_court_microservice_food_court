@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.foodquart.microservicefoodcourt.domain.exception.*;
-import com.foodquart.microservicefoodcourt.domain.util.HttpMessages;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +18,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
+import static com.foodquart.microservicefoodcourt.domain.util.HttpMessages.*;
+import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 @RestControllerAdvice
@@ -36,17 +38,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
-        return buildErrorResponse(DOMAIN_ERROR_CODE, ex.getMessage(), HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(DOMAIN_ERROR_CODE, ex.getMessage(), BAD_REQUEST);
     }
 
     @ExceptionHandler(NoDataFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoDataFoundException(NoDataFoundException ex) {
-        return buildErrorResponse(NO_DATA_FOUND_CODE, ex.getMessage(), HttpStatus.NOT_FOUND);
+        return buildErrorResponse(NO_DATA_FOUND_CODE, ex.getMessage(), NOT_FOUND);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
-        return buildErrorResponse(UNAUTHORIZED_CODE, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        return buildErrorResponse(UNAUTHORIZED_CODE, ex.getMessage(), UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -63,17 +65,17 @@ public class GlobalExceptionHandler {
 
         ValidationErrorResponse response = new ValidationErrorResponse(
                 VALIDATION_FAILED_CODE,
-                HttpMessages.VALIDATION_FAILED,
+                VALIDATION_FAILED,
                 errors);
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, BAD_REQUEST);
     }
 
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex) {
         Optional<ErrorResponse> errorResponseOptional = parseFeignError(ex);
-        return errorResponseOptional.map(errorResponse -> new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT)).orElseGet(() -> buildErrorResponse(INTERNAL_SERVER_ERROR_CODE,
-                HttpMessages.SERVICE_COMMUNICATION_ERROR, HttpStatus.INTERNAL_SERVER_ERROR));
+        return errorResponseOptional.map(errorResponse -> new ResponseEntity<>(errorResponse, CONFLICT)).orElseGet(() -> buildErrorResponse(INTERNAL_SERVER_ERROR_CODE,
+                SERVICE_COMMUNICATION_ERROR, INTERNAL_SERVER_ERROR));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -82,33 +84,33 @@ public class GlobalExceptionHandler {
             return handleUnrecognizedPropertyException(unrecognizedEx);
         }
         return buildErrorResponse(INVALID_REQUEST_BODY_CODE,
-                HttpMessages.INVALID_REQUEST_BODY, HttpStatus.BAD_REQUEST);
+                INVALID_REQUEST_BODY, BAD_REQUEST);
     }
 
     @ExceptionHandler(UnrecognizedPropertyException.class)
     public ResponseEntity<ErrorResponse> handleUnrecognizedPropertyException(UnrecognizedPropertyException ex) {
-        String message = String.format(HttpMessages.UNKNOWN_FIELD,
+        String message = String.format(UNKNOWN_FIELD,
                 ex.getPropertyName(), ex.getKnownPropertyIds());
-        return buildErrorResponse(UNKNOWN_FIELD_CODE, message, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(UNKNOWN_FIELD_CODE, message, BAD_REQUEST);
     }
 
     @ExceptionHandler(JsonMappingException.class)
     public ResponseEntity<ErrorResponse> handleJsonMappingException(JsonMappingException ex) {
         return buildErrorResponse(INVALID_REQUEST_FORMAT_CODE,
-                HttpMessages.INVALID_REQUEST_FORMAT, HttpStatus.BAD_REQUEST);
+                INVALID_REQUEST_FORMAT, BAD_REQUEST);
     }
 
     @ExceptionHandler(JsonParseException.class)
     public ResponseEntity<ErrorResponse> handleJsonParseException(JsonParseException ex) {
         return buildErrorResponse(INVALID_JSON_CODE,
-                HttpMessages.INVALID_JSON, HttpStatus.BAD_REQUEST);
+                INVALID_JSON, BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error(HttpMessages.UNEXPECTED_ERROR, ex);
+        log.error(UNEXPECTED_ERROR, ex);
         return buildErrorResponse(INTERNAL_SERVER_ERROR_CODE,
-                HttpMessages.UNEXPECTED_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+                UNEXPECTED_ERROR, INTERNAL_SERVER_ERROR);
     }
 
     private Optional<ErrorResponse> parseFeignError(FeignException ex) {

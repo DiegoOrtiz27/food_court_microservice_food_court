@@ -10,6 +10,11 @@ import org.springframework.data.domain.Page;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_ACTIVE;
+import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_FROM_RESTAURANT;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderMessages.*;
+import static com.foodquart.microservicefoodcourt.domain.util.ValidationUtil.*;
+
 public class OrderUseCase implements IOrderServicePort {
 
     private final IOrderPersistencePort orderPersistencePort;
@@ -18,39 +23,39 @@ public class OrderUseCase implements IOrderServicePort {
     private final IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
     private final IUserClientPort userClientPort;
     private final IMessagingClientPort messagingClientPort;
+    private final ISecurityContextPort securityContextPort;
 
-    public OrderUseCase(IOrderPersistencePort orderPersistencePort, IDishPersistencePort dishPersistencePort, IRestaurantPersistencePort restaurantPersistencePort, IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort, IUserClientPort userClientPort, IMessagingClientPort messagingClientPort) {
+    public OrderUseCase(IOrderPersistencePort orderPersistencePort, IDishPersistencePort dishPersistencePort, IRestaurantPersistencePort restaurantPersistencePort, IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort, IUserClientPort userClientPort, IMessagingClientPort messagingClientPort, ISecurityContextPort securityContextPort) {
         this.orderPersistencePort = orderPersistencePort;
         this.dishPersistencePort = dishPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
         this.restaurantEmployeePersistencePort = restaurantEmployeePersistencePort;
         this.userClientPort = userClientPort;
         this.messagingClientPort = messagingClientPort;
+        this.securityContextPort = securityContextPort;
     }
 
     @Override
     public OrderModel createOrder(OrderModel orderModel) {
-        ValidationUtil.validateOrderCreation(orderModel);
+        orderModel.setCustomerId(securityContextPort.getCurrentUserId());
 
-        if (!restaurantPersistencePort.existsById(orderModel.getRestaurantId())) {
-            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, orderModel.getRestaurantId()));
-        }
+        validateOrderCreation(orderModel);
+        existsRestaurantById(restaurantPersistencePort, orderModel.getRestaurantId());
 
         if (orderPersistencePort.hasActiveOrders(orderModel.getCustomerId(), OrderStatus.getActiveStatuses())) {
-            throw new DomainException(OrderMessages.CUSTOMER_HAS_ACTIVE_ORDER);
+            throw new DomainException(CUSTOMER_HAS_ACTIVE_ORDER);
         }
 
         for (OrderItemModel item : orderModel.getItems()) {
             Long dishId = item.getDish().getId();
-            DishModel dish = dishPersistencePort.findById(dishId)
-                    .orElseThrow(() -> new DomainException(String.format(DishMessages.DISH_NOT_FOUND, dishId)));
+            DishModel dish = validateExistingDish(dishPersistencePort, dishId);
 
             if (Boolean.FALSE.equals(dish.getActive())) {
-                throw new DomainException(String.format(DishMessages.DISH_NOT_ACTIVE, dishId));
+                throw new DomainException(String.format(DISH_NOT_ACTIVE, dishId));
             }
 
             if (!dish.getRestaurantId().equals(orderModel.getRestaurantId())) {
-                throw new DomainException(DishMessages.DISH_NOT_FROM_RESTAURANT);
+                throw new DomainException(DISH_NOT_FROM_RESTAURANT);
             }
         }
 
@@ -62,129 +67,120 @@ public class OrderUseCase implements IOrderServicePort {
     }
 
     @Override
-    public Page<OrderModel> getOrdersByRestaurant(Long employeeId, Long restaurantId, OrderStatus status, int page, int size) {
-        validationOrder(restaurantId, employeeId);
+    public Page<OrderModel> getOrdersByRestaurant(Long restaurantId, OrderStatus status, int page, int size) {
+        Long employeeId = securityContextPort.getCurrentUserId();
+        validateRestaurant(restaurantId, employeeId);
         return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);
     }
 
     @Override
-    public OrderModel assignOrderToEmployee(Long orderId, Long employeeId) {
-        ValidationUtil.validateUpdateEmployeeFields(orderId, employeeId);
+    public OrderModel assignOrderToEmployee(Long orderId) {
+        Long employeeId = securityContextPort.getCurrentUserId();
 
-        Optional<OrderModel> existingOrder = existingOrder(orderId);
+        validateUpdateEmployeeFields(orderId, employeeId);
+        OrderModel existingOrder = existingOrder(orderId);
+        validateRestaurant(existingOrder.getRestaurantId(), employeeId);
 
-        return existingOrder.map(order -> {
-            validationOrder(order.getRestaurantId(), employeeId);
+        if (!existingOrder.getStatus().equals(OrderStatus.PENDING)) {
+            throw new DomainException(ORDER_IS_NOT_PENDING);
+        }
 
-            if (!order.getStatus().equals(OrderStatus.PENDING)) {
-                throw new DomainException(OrderMessages.ORDER_IS_NOT_PENDING);
-            }
+        if(!existingOrder.getStatus().isNotAssignedStatus()) {
+            throw new DomainException(ORDER_ALREADY_ASSIGNED);
+        }
 
-            if(!order.getStatus().isNotAssignedStatus()) {
-                throw new DomainException(OrderMessages.ORDER_ALREADY_ASSIGNED);
-            }
-
-            order.setStatus(OrderStatus.IN_PREPARATION);
-            order.setAssignedEmployeeId(employeeId);
-            return orderPersistencePort.updateOrder(order);
-        }).orElse(null);
+        existingOrder.setStatus(OrderStatus.IN_PREPARATION);
+        existingOrder.setAssignedEmployeeId(employeeId);
+        existingOrder.setUpdatedAt(LocalDateTime.now());
+        return orderPersistencePort.saveOrder(existingOrder);
     }
 
     @Override
-    public OrderModel notifyOrderReady(Long orderId, Long employeeId) {
-        ValidationUtil.validateUpdateEmployeeFields(orderId, employeeId);
+    public OrderModel notifyOrderReady(Long orderId) {
+        Long employeeId = securityContextPort.getCurrentUserId();
 
-        Optional<OrderModel> existingOrder = existingOrder(orderId);
+        validateUpdateEmployeeFields(orderId, employeeId);
+        OrderModel existingOrder = existingOrder(orderId);
+        validateRestaurant(existingOrder.getRestaurantId(), employeeId);
 
-        return existingOrder.map(order -> {
-            validationOrder(order.getRestaurantId(), employeeId);
+        if(!existingOrder.getStatus().equals(OrderStatus.IN_PREPARATION)) {
+            throw new DomainException(ORDER_IS_NOT_PREPARING);
+        }
 
-            if(!order.getStatus().equals(OrderStatus.IN_PREPARATION)) {
-                throw new DomainException(OrderMessages.ORDER_IS_NOT_PREPARING);
-            }
+        if (!orderPersistencePort.hasAssignedOrder(employeeId, orderId)) {
+            throw new DomainException(String.format(EMPLOYEE_WITH_NOT_ORDER_ASSOCIATED, employeeId, orderId));
+        }
 
-            if (!orderPersistencePort.hasAssignedOrder(employeeId, orderId)) {
-                throw new DomainException(String.format(OrderMessages.EMPLOYEE_WITH_NOT_ORDER_ASSOCIATED, employeeId, orderId));
-            }
+        String securityPin = GenericMethods.generateSecurityPin();
 
-            String securityPin = GenericMethods.generateSecurityPin();
+        CustomerModel customerModel = userClientPort.getUserInfo(existingOrder.getCustomerId());
+        boolean notificationSuccess = messagingClientPort.notifyOrderReady(new NotificationModel(customerModel.getPhone(), String.format(ORDER_PIN, orderId, securityPin)));
 
-            CustomerModel customerModel = userClientPort.getUserInfo(order.getCustomerId());
-            boolean notificationSuccess = messagingClientPort.notifyOrderReady(new NotificationModel(customerModel.getPhone(), securityPin, orderId));
-
-            if (notificationSuccess) {
-                order.setStatus(OrderStatus.READY);
-                order.setAssignedEmployeeId(employeeId);
-                order.setSecurityPin(securityPin);
-                return orderPersistencePort.updateOrder(order);
-            } else {
-                throw new DomainException(OrderMessages.NOTIFICATION_NOT_SENT);
-            }
-        }).orElse(null);
+        if (notificationSuccess) {
+            existingOrder.setStatus(OrderStatus.READY);
+            existingOrder.setAssignedEmployeeId(employeeId);
+            existingOrder.setSecurityPin(securityPin);
+            existingOrder.setUpdatedAt(LocalDateTime.now());
+            return orderPersistencePort.saveOrder(existingOrder);
+        } else {
+            throw new DomainException(NOTIFICATION_NOT_SENT);
+        }
     }
 
     @Override
-    public OrderModel markOrderAsDelivered(Long orderId, Long employeeId, String securityPin) {
-        ValidationUtil.validateDeliveryFields(orderId, employeeId, securityPin);
+    public OrderModel markOrderAsDelivered(Long orderId, String securityPin) {
+        Long employeeId = securityContextPort.getCurrentUserId();
 
-        Optional<OrderModel> existingOrder = existingOrder(orderId);
+        validateDeliveryFields(orderId, employeeId, securityPin);
+        OrderModel existingOrder = existingOrder(orderId);
+        validateRestaurant(existingOrder.getRestaurantId(), employeeId);
 
-        return existingOrder.map(order -> {
-            validationOrder(order.getRestaurantId(), employeeId);
+        if (!existingOrder.getStatus().equals(OrderStatus.READY)) {
+            throw new DomainException(ORDER_NOT_READY_FOR_DELIVERY);
+        }
 
-            if (!order.getStatus().equals(OrderStatus.READY)) {
-                throw new DomainException(OrderMessages.ORDER_NOT_READY_FOR_DELIVERY);
-            }
+        validateSecurityPin(securityPin, existingOrder.getSecurityPin());
 
-            ValidationUtil.validateSecurityPin(securityPin, order.getSecurityPin());
+        existingOrder.setStatus(OrderStatus.DELIVERED);
+        existingOrder.setUpdatedAt(LocalDateTime.now());
 
-            order.setStatus(OrderStatus.DELIVERED);
-            order.setUpdatedAt(LocalDateTime.now());
-
-            return orderPersistencePort.updateOrder(order);
-        }).orElse(null);
+        return orderPersistencePort.saveOrder(existingOrder);
     }
 
     @Override
-    public OrderModel cancelOrder(Long orderId, Long customerId) {
-        ValidationUtil.validateUpdateCustomerFields(orderId, customerId);
+    public OrderModel cancelOrder(Long orderId) {
+        Long customerId = securityContextPort.getCurrentUserId();
 
-        Optional<OrderModel> existingOrder = existingOrder(orderId);
+        validateUpdateCustomerFields(orderId, customerId);
+        OrderModel existingOrder = existingOrder(orderId);
 
-        return existingOrder.map(order -> {
-            if (!order.getCustomerId().equals(customerId)) {
-                throw new DomainException(OrderMessages.ORDER_NOT_BELONG_TO_CUSTOMER);
-            }
+        if (!existingOrder.getCustomerId().equals(customerId)) {
+            throw new DomainException(ORDER_NOT_BELONG_TO_CUSTOMER);
+        }
 
-            if (order.getStatus() != OrderStatus.PENDING) {
-                throw new DomainException(OrderMessages.ORDER_IS_NOT_PENDING);
-            }
+        if (existingOrder.getStatus() != OrderStatus.PENDING) {
+            throw new DomainException(ORDER_IS_NOT_PENDING);
+        }
 
-            order.setStatus(OrderStatus.CANCELLED);
-            order.setUpdatedAt(LocalDateTime.now());
+        existingOrder.setStatus(OrderStatus.CANCELLED);
+        existingOrder.setUpdatedAt(LocalDateTime.now());
 
-            return orderPersistencePort.updateOrder(order);
-        }).orElse(null);
+        return orderPersistencePort.saveOrder(existingOrder);
     }
 
-    public Optional<OrderModel> existingOrder(Long orderId) {
+    public OrderModel existingOrder(Long orderId) {
         Optional<OrderModel> existingOrder = orderPersistencePort.findById(orderId);
 
         if(existingOrder.isEmpty()) {
-            throw new DomainException(String.format(OrderMessages.ORDER_NOT_FOUND, orderId));
+            throw new DomainException(String.format(ORDER_NOT_FOUND, orderId));
         }
 
-        return existingOrder;
+        return existingOrder.get();
     }
 
-    public void validationOrder(Long restaurantId, Long employeeId) {
-        if (!restaurantPersistencePort.existsById(restaurantId)) {
-            throw new DomainException(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, restaurantId));
-        }
-
-        if (!restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(employeeId, restaurantId)) {
-            throw new DomainException(String.format(RestaurantMessages.EMPLOYEE_NOT_ASSOCIATED_TO_RESTAURANT, restaurantId));
-        }
+    public void validateRestaurant(Long restaurantId, Long employeeId) {
+        existsRestaurantById(restaurantPersistencePort, restaurantId);
+        existsByEmployeeIdAndRestaurantId(restaurantEmployeePersistencePort, restaurantId, employeeId);
     }
 
 }

@@ -4,11 +4,11 @@ import com.foodquart.microservicefoodcourt.domain.model.DishModel;
 import org.springframework.data.domain.Page;
 
 public interface IDishServicePort {
-    DishModel createDish(DishModel dishModel, Long ownerId);
+    DishModel createDish(DishModel dishModel);
 
-    void updateDish(DishModel dishModel, Long ownerId);
+    void updateDish(Long dishId, DishModel dishModel);
 
-    DishModel enableOrDisableDish(DishModel dishModel, Long ownerId);
+    DishModel enableOrDisableDish(Long dishId, DishModel dishModel);
 
     Page<DishModel> getDishesByRestaurant(Long restaurantId, String category, int page, int size);
 }

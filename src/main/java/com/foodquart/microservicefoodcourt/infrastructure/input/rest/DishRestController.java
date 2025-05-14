@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,8 +27,7 @@ public class DishRestController {
     @PostMapping("/")
     public ResponseEntity<DishResponseDto> createDish(
             @Valid @RequestBody DishRequestDto dishRequestDto) {
-        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        return ResponseEntity.ok(dishHandler.createDish(dishRequestDto, id));
+        return ResponseEntity.ok(dishHandler.createDish(dishRequestDto));
     }
 
     @Operation(summary = "Update a dish (price and description only)")
@@ -40,10 +38,7 @@ public class DishRestController {
     public ResponseEntity<DishResponseDto> updateDish(
             @PathVariable("id") Long dishId,
             @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
-
-        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        updateDishRequestDto.setId(dishId);
-        return ResponseEntity.ok(dishHandler.updateDish(updateDishRequestDto, id));
+        return ResponseEntity.ok(dishHandler.updateDish(dishId, updateDishRequestDto));
     }
 
     @Operation(summary = "Enable or disable a dish")
@@ -54,9 +49,7 @@ public class DishRestController {
     public ResponseEntity<DishResponseDto> enableOrDisableDish(
             @PathVariable("id") Long dishId,
             @Valid @RequestBody EnableDishRequestDto enableDishRequestDto) {
-        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        enableDishRequestDto.setId(dishId);
-        return ResponseEntity.ok(dishHandler.enableOrDisableDish(enableDishRequestDto, id));
+        return ResponseEntity.ok(dishHandler.enableOrDisableDish(dishId, enableDishRequestDto));
     }
 
     @Operation(summary = "Get dishes by restaurant with pagination and category filter")
@@ -68,7 +61,6 @@ public class DishRestController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         return ResponseEntity.ok(dishHandler.getDishesByRestaurant(restaurantId, category, page, size));
     }
 }

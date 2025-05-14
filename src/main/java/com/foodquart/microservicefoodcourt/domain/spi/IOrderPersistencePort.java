@@ -17,8 +17,6 @@ public interface IOrderPersistencePort {
 
     Optional<OrderModel> findById(Long id);
 
-    OrderModel updateOrder(OrderModel orderModel);
-
     boolean hasAssignedOrder(Long employeeId, Long orderId);
 
 }

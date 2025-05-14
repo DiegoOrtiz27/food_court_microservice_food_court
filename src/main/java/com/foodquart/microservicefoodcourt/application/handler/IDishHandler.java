@@ -8,11 +8,11 @@ import com.foodquart.microservicefoodcourt.application.dto.response.DishResponse
 import org.springframework.data.domain.Page;
 
 public interface IDishHandler {
-    DishResponseDto createDish(DishRequestDto dishRequestDto, Long ownerId);
+    DishResponseDto createDish(DishRequestDto dishRequestDto);
 
-    DishResponseDto updateDish(UpdateDishRequestDto updateDishRequestDto, Long ownerId);
+    DishResponseDto updateDish(Long dishId, UpdateDishRequestDto updateDishRequestDto);
 
-    DishResponseDto enableOrDisableDish(EnableDishRequestDto enableDishRequestDto, Long ownerId);
+    DishResponseDto enableOrDisableDish(Long dishId, EnableDishRequestDto enableDishRequestDto);
 
     Page<DishListResponseDto> getDishesByRestaurant(Long restaurantId, String category, int page, int size);
 }

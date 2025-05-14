@@ -12,6 +12,7 @@ import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantUseCase;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IMessagingFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IUserFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.MessagingClientAdapter;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.SecurityContextAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.UserClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.INotificationRequestMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IUserRequestMapper;
@@ -28,6 +29,7 @@ import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IDi
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IOrderRepository;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.repository.IRestaurantRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +40,7 @@ public class BeanConfiguration {
 
     private final IRestaurantRepository restaurantRepository;
     private final IRestaurantEntityMapper restaurantEntityMapper;
+    private final EntityManager entityManager;
 
     private final IDishRepository dishRepository;
     private final IDishEntityMapper dishEntityMapper;
@@ -61,7 +64,8 @@ public class BeanConfiguration {
     public IRestaurantPersistencePort restaurantPersistencePort() {
         return new RestaurantJpaAdapter(
                 restaurantRepository,
-                restaurantEntityMapper);
+                restaurantEntityMapper,
+                entityManager);
     }
 
     @Bean
@@ -81,7 +85,8 @@ public class BeanConfiguration {
     public IDishServicePort dishServicePort() {
         return new DishUseCase(
                 dishPersistencePort(),
-                restaurantPersistencePort());
+                restaurantPersistencePort(),
+                securityContextPort());
     }
 
     @Bean
@@ -96,7 +101,8 @@ public class BeanConfiguration {
         return new RestaurantEmployeeUseCase(
                 restaurantEmployeePersistencePort(),
                 restaurantPersistencePort(),
-                userClientPort());
+                userClientPort(),
+                securityContextPort());
     }
 
     @Bean
@@ -114,7 +120,8 @@ public class BeanConfiguration {
                 restaurantPersistencePort(),
                 restaurantEmployeePersistencePort(),
                 userClientPort(),
-                messagingClientPort());
+                messagingClientPort(),
+                securityContextPort());
     }
 
     @Bean
@@ -127,8 +134,13 @@ public class BeanConfiguration {
 
     @Bean
     public IMessagingClientPort messagingClientPort() {
-        return  new MessagingClientAdapter(
+        return new MessagingClientAdapter(
                 messagingFeignClient,
                 notificationRequestMapper);
+    }
+
+    @Bean
+    ISecurityContextPort securityContextPort() {
+        return new SecurityContextAdapter();
     }
 }

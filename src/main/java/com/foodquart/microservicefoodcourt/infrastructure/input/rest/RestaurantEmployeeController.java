@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,9 +23,6 @@ public class RestaurantEmployeeController {
     public ResponseEntity<CreateRestaurantEmployeeResponseDto> addEmployeeToRestaurant(
             @PathVariable Long restaurantId,
             @Valid @RequestBody CreateRestaurantEmployeeRequestDto createRestaurantEmployeeRequestDto) {
-
-        Long id = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getName());
-        createRestaurantEmployeeRequestDto.setRestaurantId(restaurantId);
-        return ResponseEntity.ok(employeeHandler.addEmployeeToRestaurant(id, createRestaurantEmployeeRequestDto));
+        return ResponseEntity.ok(employeeHandler.addEmployeeToRestaurant(restaurantId, createRestaurantEmployeeRequestDto));
     }
 }
