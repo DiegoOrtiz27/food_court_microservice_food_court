@@ -9,7 +9,7 @@ public class GenericMethods {
         return String.format("%04d", RANDOM.nextInt(10000));
     }
 
-    private GenericMethods() {
-        throw new AssertionError("Utility class should not be instantiated");
+    GenericMethods() {
+        throw new IllegalStateException("Utility class");
     }
 }

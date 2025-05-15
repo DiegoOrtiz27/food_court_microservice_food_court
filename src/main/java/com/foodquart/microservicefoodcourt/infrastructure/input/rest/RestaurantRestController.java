@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.APIRestaurantDocumentationConstant.*;
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.ResponseCode.*;
+
 @RestController
 @RequestMapping("/api/v1/restaurant")
 @RequiredArgsConstructor
@@ -20,23 +23,23 @@ public class RestaurantRestController {
 
     private final IRestaurantHandler restaurantHandler;
 
-    @Operation(summary = "Create a new restaurant")
-    @ApiResponse(responseCode = "201", description = "Restaurant created successfully")
-    @ApiResponse(responseCode = "400", description = "Validation error")
-    @ApiResponse(responseCode = "409", description = "Owner is not valid")
     @PostMapping("/")
+    @Operation(summary = CREATE_RESTAURANT_SUMMARY)
+    @ApiResponse(responseCode = CODE_201, description = CREATE_RESTAURANT_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = CREATE_RESTAURANT_VALIDATION_ERROR_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_409, description = CREATE_RESTAURANT_OWNER_NOT_VALID_DESCRIPTION)
     public ResponseEntity<RestaurantResponseDto> createRestaurant(@Valid @RequestBody RestaurantRequestDto requestDto) {
         return ResponseEntity.ok(restaurantHandler.saveRestaurant(requestDto));
     }
 
-    @Operation(summary = "Get all restaurants paginated and sorted by name")
-    @ApiResponse(responseCode = "200", description = "Restaurants retrieved successfully")
-    @ApiResponse(responseCode = "204", description = "No restaurants found")
     @GetMapping("/")
+    @Operation(summary = GET_ALL_RESTAURANTS_SUMMARY)
+    @ApiResponse(responseCode = CODE_200, description = GET_ALL_RESTAURANTS_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_204, description = GET_ALL_RESTAURANTS_NO_CONTENT_DESCRIPTION)
     public ResponseEntity<PaginationListResponseDto<RestaurantItemResponse>>  getAllRestaurants(
-            @Parameter(description = "Page number (0-based)", example = "0")
+            @Parameter(description = GET_ALL_RESTAURANTS_PAGE_PARAMETER_DESCRIPTION, example = GET_ALL_RESTAURANTS_PAGE_PARAMETER_EXAMPLE)
             @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Number of items per page", example = "10")
+            @Parameter(description = GET_ALL_RESTAURANTS_SIZE_PARAMETER_DESCRIPTION, example = GET_ALL_RESTAURANTS_SIZE_PARAMETER_EXAMPLE)
             @RequestParam(defaultValue = "10") int size) {
 
         PaginationListResponseDto<RestaurantItemResponse> response = restaurantHandler.getAllRestaurants(page, size);
@@ -48,3 +51,4 @@ public class RestaurantRestController {
         return ResponseEntity.ok(response);
     }
 }
+

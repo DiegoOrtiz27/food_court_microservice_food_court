@@ -20,7 +20,7 @@ public class SecurityMessages {
             "/v3/api-docs/**"
     );
 
-    private SecurityMessages() {
-        throw new AssertionError("Utility class should not be instantiated");
+    SecurityMessages() {
+        throw new IllegalStateException("Utility class");
     }
 }

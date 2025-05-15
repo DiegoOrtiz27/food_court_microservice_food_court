@@ -6,6 +6,7 @@ import com.foodquart.microservicefoodcourt.domain.spi.IDishPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.IRestaurantPersistencePort;
 import com.foodquart.microservicefoodcourt.domain.spi.ISecurityContextPort;
 import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
+import com.foodquart.microservicefoodcourt.domain.util.Pagination;
 import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -372,18 +371,19 @@ class DishUseCaseTest {
         }
 
         @Test
-        @DisplayName("Should return page of dishes when restaurant exists")
-        void shouldReturnPageOfDishesWhenRestaurantExists() {
+        @DisplayName("Should return Pagination of dishes when restaurant exists")
+        void shouldReturnPaginationOfDishesWhenRestaurantExists() {
             Long restaurantId = 1L;
-            Page<DishModel> expectedPage = new PageImpl<>(List.of(validDish));
+            List<DishModel> dishList = List.of(validDish);
+            Pagination<DishModel> expectedPagination = new Pagination<>(dishList, 0, 10, 1); // Ajusta el total según sea necesario
 
             when(restaurantPersistencePort.existsById(restaurantId)).thenReturn(true);
             when(dishPersistencePort.findByRestaurantIdAndCategory(restaurantId, "Starter", 0, 10))
-                    .thenReturn(expectedPage);
+                    .thenReturn(expectedPagination);
 
-            Page<DishModel> result = dishUseCase.getDishesByRestaurant(restaurantId, "Starter", 0, 10);
+            Pagination<DishModel> result = dishUseCase.getDishesByRestaurant(restaurantId, "Starter", 0, 10);
 
-            assertEquals(expectedPage, result);
+            assertEquals(expectedPagination, result);
             verify(restaurantPersistencePort).existsById(restaurantId);
             verify(dishPersistencePort).findByRestaurantIdAndCategory(restaurantId, "Starter", 0, 10);
             verifyNoInteractions(securityContextPort);

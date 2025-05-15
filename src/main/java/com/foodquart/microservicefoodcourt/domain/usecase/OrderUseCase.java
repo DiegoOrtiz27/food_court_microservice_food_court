@@ -12,6 +12,9 @@ import java.util.Optional;
 import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_ACTIVE;
 import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_FROM_RESTAURANT;
 import static com.foodquart.microservicefoodcourt.domain.util.OrderMessages.*;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderTraceMessages.*;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderTraceMessages.ORDER_CANCELLED;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderTraceMessages.ORDER_DELIVERED;
 import static com.foodquart.microservicefoodcourt.domain.util.ValidationUtil.*;
 
 public class OrderUseCase implements IOrderServicePort {
@@ -23,8 +26,9 @@ public class OrderUseCase implements IOrderServicePort {
     private final IUserClientPort userClientPort;
     private final IMessagingClientPort messagingClientPort;
     private final ISecurityContextPort securityContextPort;
+    private final ITracingClientPort tracingClientPort;
 
-    public OrderUseCase(IOrderPersistencePort orderPersistencePort, IDishPersistencePort dishPersistencePort, IRestaurantPersistencePort restaurantPersistencePort, IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort, IUserClientPort userClientPort, IMessagingClientPort messagingClientPort, ISecurityContextPort securityContextPort) {
+    public OrderUseCase(IOrderPersistencePort orderPersistencePort, IDishPersistencePort dishPersistencePort, IRestaurantPersistencePort restaurantPersistencePort, IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort, IUserClientPort userClientPort, IMessagingClientPort messagingClientPort, ISecurityContextPort securityContextPort, ITracingClientPort tracingClientPort) {
         this.orderPersistencePort = orderPersistencePort;
         this.dishPersistencePort = dishPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
@@ -32,6 +36,7 @@ public class OrderUseCase implements IOrderServicePort {
         this.userClientPort = userClientPort;
         this.messagingClientPort = messagingClientPort;
         this.securityContextPort = securityContextPort;
+        this.tracingClientPort = tracingClientPort;
     }
 
     @Override
@@ -62,7 +67,14 @@ public class OrderUseCase implements IOrderServicePort {
         LocalDateTime now = LocalDateTime.now();
         orderModel.setCreatedAt(now);
         orderModel.setUpdatedAt(now);
-        return orderPersistencePort.saveOrder(orderModel);
+
+        orderModel = orderPersistencePort.saveOrder(orderModel);
+
+        orderModel.setStatus(null);
+        recordStatusChange(orderModel, OrderStatus.PENDING, String.format(ORDER_CREATED, orderModel.getItems().size()));
+        orderModel.setStatus(OrderStatus.PENDING);
+
+        return orderModel;
     }
 
     @Override
@@ -85,13 +97,14 @@ public class OrderUseCase implements IOrderServicePort {
             throw new DomainException(ORDER_IS_NOT_PENDING);
         }
 
-        if(!existingOrder.getStatus().isNotAssignedStatus()) {
-            throw new DomainException(ORDER_ALREADY_ASSIGNED);
-        }
-
-        existingOrder.setStatus(OrderStatus.IN_PREPARATION);
         existingOrder.setAssignedEmployeeId(employeeId);
         existingOrder.setUpdatedAt(LocalDateTime.now());
+
+        recordStatusChange(existingOrder, OrderStatus.IN_PREPARATION, String.format(ORDER_ASSIGNED, employeeId));
+
+        existingOrder.setStatus(OrderStatus.IN_PREPARATION);
+
+
         return orderPersistencePort.saveOrder(existingOrder);
     }
 
@@ -114,11 +127,13 @@ public class OrderUseCase implements IOrderServicePort {
         String securityPin = GenericMethods.generateSecurityPin();
 
         CustomerModel customerModel = userClientPort.getUserInfo(existingOrder.getCustomerId());
-        boolean notificationSuccess = messagingClientPort.notifyOrderReady(new NotificationModel(customerModel.getPhone(), String.format(ORDER_PIN, orderId, securityPin)));
+        String notificationMessages =  String.format(ORDER_PIN, orderId, securityPin);
+        boolean notificationSuccess = messagingClientPort.notifyOrderReady(new NotificationModel(customerModel.getPhone(), notificationMessages));
 
         if (notificationSuccess) {
+            recordStatusChange(existingOrder, OrderStatus.READY, notificationMessages);
+
             existingOrder.setStatus(OrderStatus.READY);
-            existingOrder.setAssignedEmployeeId(employeeId);
             existingOrder.setSecurityPin(securityPin);
             existingOrder.setUpdatedAt(LocalDateTime.now());
             return orderPersistencePort.saveOrder(existingOrder);
@@ -141,6 +156,8 @@ public class OrderUseCase implements IOrderServicePort {
 
         validateSecurityPin(securityPin, existingOrder.getSecurityPin());
 
+        recordStatusChange(existingOrder, OrderStatus.DELIVERED, String.format(ORDER_DELIVERED, employeeId));
+
         existingOrder.setStatus(OrderStatus.DELIVERED);
         existingOrder.setUpdatedAt(LocalDateTime.now());
 
@@ -162,6 +179,8 @@ public class OrderUseCase implements IOrderServicePort {
             throw new DomainException(ORDER_IS_NOT_PENDING);
         }
 
+        recordStatusChange(existingOrder, OrderStatus.CANCELLED, String.format(ORDER_CANCELLED, customerId));
+
         existingOrder.setStatus(OrderStatus.CANCELLED);
         existingOrder.setUpdatedAt(LocalDateTime.now());
 
@@ -181,6 +200,19 @@ public class OrderUseCase implements IOrderServicePort {
     public void validateRestaurant(Long restaurantId, Long employeeId) {
         existsRestaurantById(restaurantPersistencePort, restaurantId);
         existsByEmployeeIdAndRestaurantId(restaurantEmployeePersistencePort, restaurantId, employeeId);
+    }
+
+    private void recordStatusChange(OrderModel order, OrderStatus newStatus, String notes) {
+        OrderTraceModel trace = new OrderTraceModel();
+        trace.setOrderId(order.getId());
+        trace.setCustomerId(order.getCustomerId());
+        trace.setRestaurantId(order.getRestaurantId());
+        trace.setEmployeeId(order.getAssignedEmployeeId());
+        trace.setPreviousStatus(order.getStatus());
+        trace.setNewStatus(newStatus);
+        trace.setNotes(notes);
+
+        tracingClientPort.recordOrderStatusChange(trace);
     }
 
 }

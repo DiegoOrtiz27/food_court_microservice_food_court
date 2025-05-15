@@ -10,11 +10,14 @@ import com.foodquart.microservicefoodcourt.domain.usecase.OrderUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantEmployeeUseCase;
 import com.foodquart.microservicefoodcourt.domain.usecase.RestaurantUseCase;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IMessagingFeignClient;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.ITracingFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.IUserFeignClient;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.MessagingClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.SecurityContextAdapter;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.TracingClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.adapter.UserClientAdapter;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.INotificationRequestMapper;
+import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IOrderTraceRequestMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IUserRequestMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.client.mapper.IUserResponseMapper;
 import com.foodquart.microservicefoodcourt.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -57,6 +60,9 @@ public class BeanConfiguration {
 
     private final IMessagingFeignClient messagingFeignClient;
     private final INotificationRequestMapper notificationRequestMapper;
+
+    private final ITracingFeignClient tracingFeignClient;
+    private final IOrderTraceRequestMapper orderTraceRequestMapper;
 
 
 
@@ -123,7 +129,8 @@ public class BeanConfiguration {
                 restaurantEmployeePersistencePort(),
                 userClientPort(),
                 messagingClientPort(),
-                securityContextPort());
+                securityContextPort(),
+                tracingClientPort());
     }
 
     @Bean
@@ -144,5 +151,12 @@ public class BeanConfiguration {
     @Bean
     ISecurityContextPort securityContextPort() {
         return new SecurityContextAdapter();
+    }
+
+    @Bean
+    ITracingClientPort tracingClientPort() {
+        return new TracingClientAdapter(
+                tracingFeignClient,
+                orderTraceRequestMapper);
     }
 }

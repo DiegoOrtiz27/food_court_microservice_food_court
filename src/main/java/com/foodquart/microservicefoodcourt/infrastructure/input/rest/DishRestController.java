@@ -14,48 +14,51 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.APIDishDocumentationConstant.*;
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.ResponseCode.*;
+
 @RestController
 @RequestMapping("/api/v1/dishes")
 @RequiredArgsConstructor
 public class DishRestController {
     private final IDishHandler dishHandler;
 
-    @Operation(summary = "Create a new dish")
-    @ApiResponse(responseCode = "201", description = "Dish created successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data")
-    @ApiResponse(responseCode = "403", description = "Only restaurant owners can create dishes")
     @PostMapping("/")
+    @Operation(summary = CREATE_DISH_SUMMARY)
+    @ApiResponse(responseCode = CODE_201, description = CREATE_DISH_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = CREATE_DISH_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = CREATE_DISH_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<DishResponseDto> createDish(
             @Valid @RequestBody DishRequestDto dishRequestDto) {
         return ResponseEntity.ok(dishHandler.createDish(dishRequestDto));
     }
 
-    @Operation(summary = "Update a dish (price and description only)")
-    @ApiResponse(responseCode = "204", description = "Dish updated successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid data")
-    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/{id}")
+    @Operation(summary = UPDATE_DISH_SUMMARY)
+    @ApiResponse(responseCode = CODE_204, description = UPDATE_DISH_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = UPDATE_DISH_INVALID_DATA_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = UPDATE_DISH_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<DishResponseDto> updateDish(
             @PathVariable("id") Long dishId,
             @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
         return ResponseEntity.ok(dishHandler.updateDish(dishId, updateDishRequestDto));
     }
 
-    @Operation(summary = "Enable or disable a dish")
-    @ApiResponse(responseCode = "204", description = "Dish status updated successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data")
-    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/status/{id}")
+    @Operation(summary = ENABLE_DISABLE_DISH_SUMMARY)
+    @ApiResponse(responseCode = CODE_204, description = ENABLE_DISABLE_DISH_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = ENABLE_DISABLE_DISH_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = ENABLE_DISABLE_DISH_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<DishResponseDto> enableOrDisableDish(
             @PathVariable("id") Long dishId,
             @Valid @RequestBody EnableDishRequestDto enableDishRequestDto) {
         return ResponseEntity.ok(dishHandler.enableOrDisableDish(dishId, enableDishRequestDto));
     }
 
-    @Operation(summary = "Get dishes by restaurant with pagination and category filter")
-    @ApiResponse(responseCode = "200", description = "Dishes retrieved successfully")
-    @ApiResponse(responseCode = "404", description = "Restaurant not found")
     @GetMapping("/restaurant/{restaurantId}")
+    @Operation(summary = GET_DISHES_BY_RESTAURANT_SUMMARY)
+    @ApiResponse(responseCode = CODE_200, description = GET_DISHES_BY_RESTAURANT_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_404, description = GET_DISHES_BY_RESTAURANT_NOT_FOUND_DESCRIPTION)
     public ResponseEntity<PaginationListResponseDto<DishListResponseDto>> getDishesByRestaurant(
             @PathVariable Long restaurantId,
             @RequestParam(required = false) String category,
