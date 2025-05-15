@@ -11,7 +11,7 @@ public class DishMessages {
 
     public static final String PRICE_MUST_BE_POSITIVE = "Price must be positive";
 
-    private DishMessages() {
-        throw new AssertionError("Utility class should not be instantiated");
+    DishMessages() {
+        throw new IllegalStateException("Utility class");
     }
 }

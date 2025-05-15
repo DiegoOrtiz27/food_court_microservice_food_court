@@ -7,7 +7,6 @@ public class OrderMessages {
     public static final String ORDER_DELIVERED = "Order marked as delivered successfully";
     public static final String ORDER_CANCELLED = "Order cancelled successfully";
     public static final String ORDER_PIN = "Your order #%d is ready. Security PIN: %s";
-    public static final String ORDER_ALREADY_ASSIGNED = "The order is already assigned";
     public static final String ORDER_IS_NOT_PREPARING = "The order is not preparing";
     public static final String ORDER_IS_NOT_PENDING = "The order is not pending";
     public static final String ORDER_NOT_FOUND = "Order with id '%d' not found";
@@ -25,7 +24,7 @@ public class OrderMessages {
     public static final String RESTAURANT_ID_REQUIRED = "Restaurant ID is required";
     public static final String ORDER_ITEMS_REQUIRED = "Order must have at least one item";
 
-    private OrderMessages() {
+    OrderMessages() {
         throw new IllegalStateException("Utility class");
     }
 }

@@ -118,7 +118,7 @@ public class ValidationUtil {
         return existingDish.get();
     }
 
-    private ValidationUtil() {
-        throw new AssertionError("Utility class should not be instantiated");
+    ValidationUtil() {
+        throw new IllegalStateException("Utility class");
     }
 }

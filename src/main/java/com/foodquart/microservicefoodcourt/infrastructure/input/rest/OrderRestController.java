@@ -14,26 +14,29 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.APIOrderDocumentationConstant.*;
+import static com.foodquart.microservicefoodcourt.infrastructure.documentation.ResponseCode.*;
+
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderRestController {
     private final IOrderHandler orderHandler;
 
-    @Operation(summary = "Create a new order")
-    @ApiResponse(responseCode = "201", description = "Order created successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data")
-    @ApiResponse(responseCode = "409", description = "Customer already has an active order")
     @PostMapping("/")
+    @Operation(summary = CREATE_ORDER_SUMMARY)
+    @ApiResponse(responseCode = CODE_201, description = CREATE_ORDER_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = CREATE_ORDER_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_409, description = CREATE_ORDER_CONFLICT_DESCRIPTION)
     public ResponseEntity<OrderResponseDto> createOrder(
             @Valid @RequestBody OrderRequestDto orderRequestDto) {
         return ResponseEntity.ok(orderHandler.createOrder(orderRequestDto));
     }
 
-    @Operation(summary = "Get orders by restaurant with pagination and status filter")
-    @ApiResponse(responseCode = "200", description = "Order retrieved successfully")
-    @ApiResponse(responseCode = "404", description = "Restaurant not found")
     @GetMapping("/restaurant/{restaurantId}")
+    @Operation(summary = GET_ORDERS_BY_RESTAURANT_SUMMARY)
+    @ApiResponse(responseCode = CODE_200, description = GET_ORDERS_BY_RESTAURANT_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_404, description = GET_ORDERS_BY_RESTAURANT_NOT_FOUND_DESCRIPTION)
     public ResponseEntity<PaginationListResponseDto<OrderListResponseDto>> getOrdersByRestaurant(
             @PathVariable Long restaurantId,
             @RequestParam(required = false) OrderStatus status,
@@ -50,43 +53,43 @@ public class OrderRestController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Assign order to employee")
-    @ApiResponse(responseCode = "204", description = "Order assigned successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data")
-    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/{id}")
+    @Operation(summary = ASSIGN_ORDER_SUMMARY)
+    @ApiResponse(responseCode = CODE_204, description = ASSIGN_ORDER_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = ASSIGN_ORDER_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = ASSIGN_ORDER_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<OrderResponseDto> assignOrderToEmployee(
             @PathVariable("id") Long orderId) {
         return ResponseEntity.ok(orderHandler.assignOrderToEmployee(orderId));
     }
 
-    @Operation(summary = "Notify order ready")
-    @ApiResponse(responseCode = "204", description = "Order notified successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data")
-    @ApiResponse(responseCode = "403", description = "Not authorized")
     @PatchMapping("/notifyOrderReady/{id}")
+    @Operation(summary = NOTIFY_ORDER_READY_SUMMARY)
+    @ApiResponse(responseCode = CODE_204, description = NOTIFY_ORDER_READY_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = NOTIFY_ORDER_READY_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = NOTIFY_ORDER_READY_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<OrderResponseDto> notifyOrderReady(
             @PathVariable("id") Long orderId) {
         return ResponseEntity.ok(orderHandler.notifyOrderReady(orderId));
     }
 
-    @Operation(summary = "Mark order as delivered")
-    @ApiResponse(responseCode = "200", description = "Order marked as delivered successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input data or invalid order status")
-    @ApiResponse(responseCode = "403", description = "Not authorized or invalid security pin")
     @PatchMapping("/deliverOrder/{id}")
+    @Operation(summary = MARK_ORDER_DELIVERED_SUMMARY)
+    @ApiResponse(responseCode = CODE_200, description = MARK_ORDER_DELIVERED_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = MARK_ORDER_DELIVERED_INVALID_INPUT_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = MARK_ORDER_DELIVERED_UNAUTHORIZED_DESCRIPTION)
     public ResponseEntity<OrderResponseDto> markOrderAsDelivered(
             @PathVariable("id") Long orderId,
             @Valid @RequestBody OrderDeliveryRequestDto deliveryRequest) {
         return ResponseEntity.ok(orderHandler.markOrderAsDelivered(orderId, deliveryRequest));
     }
 
-    @Operation(summary = "Cancel order by customer")
-    @ApiResponse(responseCode = "200", description = "Order cancelled successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid order status for cancellation")
-    @ApiResponse(responseCode = "403", description = "Not authorized")
-    @ApiResponse(responseCode = "404", description = "Order not found")
     @PatchMapping("/cancel/{id}")
+    @Operation(summary = CANCEL_ORDER_SUMMARY)
+    @ApiResponse(responseCode = CODE_200, description = CANCEL_ORDER_SUCCESS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_400, description = CANCEL_ORDER_INVALID_STATUS_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_403, description = CANCEL_ORDER_UNAUTHORIZED_DESCRIPTION)
+    @ApiResponse(responseCode = CODE_404, description = CANCEL_ORDER_NOT_FOUND_DESCRIPTION)
     public ResponseEntity<OrderResponseDto> cancelOrder(
             @PathVariable("id") Long orderId) {
         return ResponseEntity.ok(orderHandler.cancelOrder(orderId));

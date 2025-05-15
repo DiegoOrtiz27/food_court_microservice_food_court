@@ -9,7 +9,7 @@ public final class HttpMessages {
     public static final String INVALID_JSON = "Malformed JSON request";
     public static final String UNEXPECTED_ERROR = "An unexpected error occurred";
 
-    private HttpMessages() {
+    HttpMessages() {
         throw new IllegalStateException("Utility class");
     }
 }

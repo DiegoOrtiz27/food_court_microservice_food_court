@@ -3,10 +3,7 @@ package com.foodquart.microservicefoodcourt.domain.usecase;
 import com.foodquart.microservicefoodcourt.domain.exception.DomainException;
 import com.foodquart.microservicefoodcourt.domain.model.*;
 import com.foodquart.microservicefoodcourt.domain.spi.*;
-import com.foodquart.microservicefoodcourt.domain.util.DishMessages;
-import com.foodquart.microservicefoodcourt.domain.util.OrderMessages;
-import com.foodquart.microservicefoodcourt.domain.util.OrderStatus;
-import com.foodquart.microservicefoodcourt.domain.util.RestaurantMessages;
+import com.foodquart.microservicefoodcourt.domain.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,13 +12,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
 
+import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_ACTIVE;
+import static com.foodquart.microservicefoodcourt.domain.util.DishMessages.DISH_NOT_FROM_RESTAURANT;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderMessages.CUSTOMER_HAS_ACTIVE_ORDER;
+import static com.foodquart.microservicefoodcourt.domain.util.OrderMessages.RESTAURANT_ID_REQUIRED;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -32,10 +30,10 @@ class OrderUseCaseTest {
     private IOrderPersistencePort orderPersistencePort;
 
     @Mock
-    private IDishPersistencePort dishPersistencePort;
+    private IRestaurantPersistencePort restaurantPersistencePort;
 
     @Mock
-    private IRestaurantPersistencePort restaurantPersistencePort;
+    private IDishPersistencePort dishPersistencePort;
 
     @Mock
     private IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
@@ -47,30 +45,34 @@ class OrderUseCaseTest {
     private IMessagingClientPort messagingClientPort;
 
     @Mock
+    private ITracingClientPort tracingClientPort;
+
+    @Mock
     private ISecurityContextPort securityContextPort;
 
     @InjectMocks
     private OrderUseCase orderUseCase;
 
     private OrderModel validOrder;
+    private DishModel activeDish;
     private final Long validCustomerId = 1L;
     private final Long validRestaurantId = 5L;
-    private final Long validDishId1 = 10L;
-    private final Long validDishId2 = 11L;
     private final Long validEmployeeId = 20L;
+    private final Long validDishId1 = 10L;
+    private final Long validOrderId = 100L;
 
     @BeforeEach
     void setup() {
-        DishModel dish1 = createDish(validDishId1, validRestaurantId, true);
-        DishModel dish2 = createDish(validDishId2, validRestaurantId, true);
+        activeDish = createDish(validDishId1, validRestaurantId, true);
 
-        OrderItemModel item1 = createOrderItem(2, dish1);
-        OrderItemModel item2 = createOrderItem(1, dish2);
+        OrderItemModel item1 = createOrderItem(2, activeDish);
+        OrderItemModel item2 = createOrderItem(1, activeDish);
 
         validOrder = new OrderModel();
         validOrder.setCustomerId(validCustomerId);
         validOrder.setRestaurantId(validRestaurantId);
         validOrder.setItems(List.of(item1, item2));
+        validOrder.setId(validOrderId);
     }
 
     private DishModel createDish(Long id, Long restaurantId, Boolean active) {
@@ -93,36 +95,39 @@ class OrderUseCaseTest {
     class CreateOrderTests {
 
         @Test
-        @DisplayName("Should create order successfully with valid data")
+        @DisplayName("Should create order successfully")
         void shouldCreateOrderSuccessfully() {
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
+            when(dishPersistencePort.findById(validDishId1)).thenReturn(Optional.of(activeDish));
             when(orderPersistencePort.hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses())).thenReturn(false);
-            when(dishPersistencePort.findById(validDishId1)).thenReturn(java.util.Optional.of(validOrder.getItems().get(0).getDish()));
-            when(dishPersistencePort.findById(validDishId2)).thenReturn(java.util.Optional.of(validOrder.getItems().get(1).getDish()));
-            when(orderPersistencePort.saveOrder(any(OrderModel.class))).thenReturn(validOrder);
+            when(orderPersistencePort.saveOrder(any(OrderModel.class))).thenAnswer(invocation -> {
+                OrderModel savedOrder = invocation.getArgument(0);
+                savedOrder.setId(validOrderId);
+                return savedOrder;
+            });
+            doNothing().when(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class));
 
             OrderModel result = orderUseCase.createOrder(validOrder);
 
             assertNotNull(result);
             assertEquals(OrderStatus.PENDING, result.getStatus());
+            assertNotNull(result.getCreatedAt());
+            assertNotNull(result.getUpdatedAt());
+            assertEquals(validCustomerId, result.getCustomerId());
+            assertEquals(validRestaurantId, result.getRestaurantId());
+            assertEquals(2, result.getItems().size());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verify(dishPersistencePort, times(2)).findById(validDishId1);
+            verify(orderPersistencePort).hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses());
             verify(orderPersistencePort).saveOrder(any(OrderModel.class));
+            verify(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class));
         }
 
         @Test
-        @DisplayName("Should throw exception when restaurant doesn't exist")
-        void shouldThrowWhenRestaurantNotExist() {
-            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(false);
-
-            DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.createOrder(validOrder));
-
-            assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, validOrder.getRestaurantId()), exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("Should throw exception when customer has active orders")
-        void shouldThrowWhenCustomerHasActiveOrders() {
+        @DisplayName("Should throw exception when customer has active order")
+        void shouldThrowExceptionWhenCustomerHasActiveOrder() {
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
             when(orderPersistencePort.hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses())).thenReturn(true);
@@ -130,55 +135,80 @@ class OrderUseCaseTest {
             DomainException exception = assertThrows(DomainException.class,
                     () -> orderUseCase.createOrder(validOrder));
 
-            assertEquals(OrderMessages.CUSTOMER_HAS_ACTIVE_ORDER, exception.getMessage());
+            assertEquals(CUSTOMER_HAS_ACTIVE_ORDER, exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verify(orderPersistencePort).hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses());
+            verifyNoInteractions(dishPersistencePort, tracingClientPort);
         }
 
         @Test
-        @DisplayName("Should throw exception when dish doesn't exist")
-        void shouldThrowWhenDishNotExist() {
+        @DisplayName("Should throw exception when dish is not from the same restaurant")
+        void shouldThrowExceptionWhenDishNotFromRestaurant() {
+            DishModel differentRestaurantDish = createDish(99L, 999L, true);
+            OrderModel orderWithDifferentRestaurantDish = new OrderModel();
+            orderWithDifferentRestaurantDish.setCustomerId(validCustomerId);
+            orderWithDifferentRestaurantDish.setRestaurantId(validRestaurantId);
+            orderWithDifferentRestaurantDish.setItems(List.of(createOrderItem(1, differentRestaurantDish)));
+
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
+            when(dishPersistencePort.findById(99L)).thenReturn(Optional.of(differentRestaurantDish));
             when(orderPersistencePort.hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses())).thenReturn(false);
-            when(dishPersistencePort.findById(validDishId1)).thenReturn(java.util.Optional.empty());
 
             DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.createOrder(validOrder));
+                    () -> orderUseCase.createOrder(orderWithDifferentRestaurantDish));
 
-            assertEquals(String.format(DishMessages.DISH_NOT_FOUND, validDishId1), exception.getMessage());
+            assertEquals(DISH_NOT_FROM_RESTAURANT, exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verify(dishPersistencePort).findById(99L);
+            verify(orderPersistencePort).hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses());
+            verifyNoInteractions(tracingClientPort);
         }
 
         @Test
-        @DisplayName("Should throw exception when dish is not active")
-        void shouldThrowWhenDishNotActive() {
-            DishModel inactiveDish = createDish(validDishId1, validRestaurantId, false);
-            validOrder.getItems().getFirst().setDish(inactiveDish);
+        @DisplayName("Should throw exception when a dish in the order is not active")
+        void shouldThrowExceptionWhenDishIsNotActive() {
+            DishModel inactiveDish = createDish(99L, validRestaurantId, false);
+            OrderItemModel itemWithInactiveDish = createOrderItem(1, inactiveDish);
+            OrderModel orderWithInactive = new OrderModel();
+            orderWithInactive.setCustomerId(validCustomerId);
+            orderWithInactive.setRestaurantId(validRestaurantId);
+            orderWithInactive.setItems(List.of(itemWithInactiveDish));
 
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
+            when(dishPersistencePort.findById(99L)).thenReturn(Optional.of(inactiveDish));
             when(orderPersistencePort.hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses())).thenReturn(false);
-            when(dishPersistencePort.findById(validDishId1)).thenReturn(java.util.Optional.of(inactiveDish));
 
             DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.createOrder(validOrder));
+                    () -> orderUseCase.createOrder(orderWithInactive));
 
-            assertEquals(String.format(DishMessages.DISH_NOT_ACTIVE, validDishId1), exception.getMessage());
+            assertEquals(String.format(DISH_NOT_ACTIVE, 99L), exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verify(dishPersistencePort).findById(99L);
+            verify(orderPersistencePort).hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses());
+            verifyNoInteractions(tracingClientPort);
         }
 
         @Test
-        @DisplayName("Should throw exception when dish doesn't belong to restaurant")
-        void shouldThrowWhenDishNotFromRestaurant() {
-            DishModel wrongRestaurantDish = createDish(validDishId1, 99L, true);
-            validOrder.getItems().getFirst().setDish(wrongRestaurantDish);
+        @DisplayName("Should throw exception when restaurant ID is null")
+        void shouldThrowExceptionWhenRestaurantIdIsNull() {
+            OrderModel orderWithNullRestaurantId = new OrderModel();
+            orderWithNullRestaurantId.setCustomerId(validCustomerId);
+            orderWithNullRestaurantId.setRestaurantId(null);
+            orderWithNullRestaurantId.setItems(List.of(createOrderItem(1, activeDish)));
 
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
-            when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
-            when(orderPersistencePort.hasActiveOrders(validCustomerId, OrderStatus.getActiveStatuses())).thenReturn(false);
-            when(dishPersistencePort.findById(validDishId1)).thenReturn(java.util.Optional.of(wrongRestaurantDish));
 
             DomainException exception = assertThrows(DomainException.class,
-                    () -> orderUseCase.createOrder(validOrder));
+                    () -> orderUseCase.createOrder(orderWithNullRestaurantId));
 
-            assertEquals(DishMessages.DISH_NOT_FROM_RESTAURANT, exception.getMessage());
+            assertEquals(RESTAURANT_ID_REQUIRED, exception.getMessage());
+            verify(securityContextPort).getCurrentUserId();
+            verifyNoInteractions(restaurantPersistencePort, dishPersistencePort, orderPersistencePort, tracingClientPort);
         }
     }
 
@@ -187,20 +217,20 @@ class OrderUseCaseTest {
     class GetOrdersByRestaurantTests {
 
         @Test
-        @DisplayName("Should return orders page when valid parameters")
-        void shouldReturnOrdersPage() {
-            PageRequest pageable = PageRequest.of(0, 10);
-            Page<OrderModel> expectedPage = new PageImpl<>(List.of(validOrder), pageable, 1);
+        @DisplayName("Should return orders Pagination when valid parameters")
+        void shouldReturnOrdersPagination() {
+            List<OrderModel> orderList = List.of(validOrder);
+            Pagination<OrderModel> expectedPagination = new Pagination<>(orderList, 0, 10, 1); // Ajusta el total según sea necesario
 
             when(securityContextPort.getCurrentUserId()).thenReturn(validEmployeeId);
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
             when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId)).thenReturn(true);
-            when(orderPersistencePort.findByRestaurantIdAndStatus(validRestaurantId, OrderStatus.PENDING, 0, 10)).thenReturn(expectedPage);
+            when(orderPersistencePort.findByRestaurantIdAndStatus(validRestaurantId, OrderStatus.PENDING, 0, 10)).thenReturn(expectedPagination);
 
-            Page<OrderModel> result = orderUseCase.getOrdersByRestaurant(validRestaurantId, OrderStatus.PENDING, 0, 10);
+            Pagination<OrderModel> result = orderUseCase.getOrdersByRestaurant(validRestaurantId, OrderStatus.PENDING, 0, 10);
 
             assertNotNull(result);
-            assertEquals(1, result.getTotalElements());
+            assertEquals(expectedPagination, result);
             verify(orderPersistencePort).findByRestaurantIdAndStatus(validRestaurantId, OrderStatus.PENDING, 0, 10);
         }
 
@@ -214,6 +244,8 @@ class OrderUseCaseTest {
                     () -> orderUseCase.getOrdersByRestaurant(validRestaurantId, OrderStatus.PENDING, 0, 10));
 
             assertEquals(String.format(RestaurantMessages.RESTAURANT_NOT_FOUND, validRestaurantId), exception.getMessage());
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verifyNoInteractions(orderPersistencePort, restaurantEmployeePersistencePort);
         }
 
         @Test
@@ -227,6 +259,9 @@ class OrderUseCaseTest {
                     () -> orderUseCase.getOrdersByRestaurant(validRestaurantId , OrderStatus.PENDING, 0, 10));
 
             assertEquals(String.format(RestaurantMessages.EMPLOYEE_NOT_ASSOCIATED_TO_RESTAURANT, validRestaurantId), exception.getMessage());
+            verify(restaurantPersistencePort).existsById(validRestaurantId);
+            verify(restaurantEmployeePersistencePort).existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId);
+            verifyNoInteractions(orderPersistencePort);
         }
     }
 
@@ -346,6 +381,7 @@ class OrderUseCaseTest {
             when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId))
                     .thenReturn(true);
             when(orderPersistencePort.saveOrder(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            doNothing().when(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Simula la llamada al tracing client
 
             OrderModel result = orderUseCase.assignOrderToEmployee(validOrderId);
 
@@ -353,6 +389,7 @@ class OrderUseCaseTest {
             assertEquals(OrderStatus.IN_PREPARATION, result.getStatus());
             assertEquals(validEmployeeId, result.getAssignedEmployeeId());
             verify(orderPersistencePort).saveOrder(pendingOrder);
+            verify(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Verifica la llamada al tracing client
         }
     }
 
@@ -386,6 +423,7 @@ class OrderUseCaseTest {
             when(userClientPort.getUserInfo(validCustomerId)).thenReturn(customer);
             when(messagingClientPort.notifyOrderReady(any())).thenReturn(true);
             when(orderPersistencePort.saveOrder(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            doNothing().when(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Simula la llamada al tracing client
 
             OrderModel result = orderUseCase.notifyOrderReady(validOrderId);
 
@@ -394,6 +432,7 @@ class OrderUseCaseTest {
             assertNotNull(result.getSecurityPin());
             verify(messagingClientPort).notifyOrderReady(any());
             verify(orderPersistencePort).saveOrder(any());
+            verify(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Verifica la llamada al tracing client
         }
 
         @Test
@@ -524,12 +563,14 @@ class OrderUseCaseTest {
             when(restaurantPersistencePort.existsById(validRestaurantId)).thenReturn(true);
             when(restaurantEmployeePersistencePort.existsByEmployeeIdAndRestaurantId(validEmployeeId, validRestaurantId)).thenReturn(true);
             when(orderPersistencePort.saveOrder(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            doNothing().when(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Simula la llamada al tracing client
 
             OrderModel result = orderUseCase.markOrderAsDelivered(validOrderId, validSecurityPin);
 
             assertNotNull(result);
             assertEquals(OrderStatus.DELIVERED, result.getStatus());
             verify(orderPersistencePort).saveOrder(readyOrder);
+            verify(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class)); // Verifica la llamada al tracing client
         }
 
         @Test
@@ -665,12 +706,14 @@ class OrderUseCaseTest {
             when(securityContextPort.getCurrentUserId()).thenReturn(validCustomerId);
             when(orderPersistencePort.findById(validOrderId)).thenReturn(Optional.of(pendingOrder));
             when(orderPersistencePort.saveOrder(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            doNothing().when(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class));
 
             OrderModel result = orderUseCase.cancelOrder(validOrderId);
 
             assertNotNull(result);
             assertEquals(OrderStatus.CANCELLED, result.getStatus());
             verify(orderPersistencePort).saveOrder(pendingOrder);
+            verify(tracingClientPort).recordOrderStatusChange(any(OrderTraceModel.class));
         }
 
         @Test

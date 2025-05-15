@@ -29,6 +29,8 @@ microservice:
     url: http://localhost:8081
   messaging:
     url: http://localhost:8083
+  tracing:
+    url: http://localhost:8084
 
 appDescription: "Microservice food court"
 appVersion: "1.0.0"
